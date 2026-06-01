@@ -11,15 +11,36 @@ def detect_tool(name):
 
 def detect_html_open():
     if sys.platform.startswith("win"):
-        return {"available": True, "command": "start"}
+        return {
+            "available": True,
+            "strategy": "os.startfile",
+            "command": None,
+            "path": None,
+            "argv_prefix": [],
+        }
 
-    candidates = ["open"] if sys.platform == "darwin" else ["xdg-open", "gio"]
-    for name in candidates:
+    candidates = [("open", [])] if sys.platform == "darwin" else [
+        ("xdg-open", []),
+        ("gio", ["open"]),
+    ]
+    for name, args in candidates:
         path = shutil.which(name)
         if path:
-            return {"available": True, "command": name, "path": path}
+            return {
+                "available": True,
+                "strategy": "argv",
+                "command": name,
+                "path": path,
+                "argv_prefix": [path, *args],
+            }
 
-    return {"available": False, "command": None, "path": None}
+    return {
+        "available": False,
+        "strategy": None,
+        "command": None,
+        "path": None,
+        "argv_prefix": [],
+    }
 
 
 def build_report():

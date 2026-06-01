@@ -33,9 +33,32 @@ class CheckEnvironmentTests(unittest.TestCase):
         ):
             self.assertEqual(
                 MODULE.detect_html_open(),
-                {"available": True, "command": "open", "path": "/usr/bin/open"},
+                {
+                    "available": True,
+                    "strategy": "argv",
+                    "command": "open",
+                    "path": "/usr/bin/open",
+                    "argv_prefix": ["/usr/bin/open"],
+                },
             )
         which.assert_called_once_with("open")
+
+    def test_detect_html_open_prefers_xdg_open(self):
+        with (
+            patch.object(MODULE.sys, "platform", "linux"),
+            patch.object(MODULE.shutil, "which", return_value="/usr/bin/xdg-open") as which,
+        ):
+            self.assertEqual(
+                MODULE.detect_html_open(),
+                {
+                    "available": True,
+                    "strategy": "argv",
+                    "command": "xdg-open",
+                    "path": "/usr/bin/xdg-open",
+                    "argv_prefix": ["/usr/bin/xdg-open"],
+                },
+            )
+        which.assert_called_once_with("xdg-open")
 
     def test_detect_html_open_falls_back_to_gio(self):
         def which(name):
@@ -47,15 +70,30 @@ class CheckEnvironmentTests(unittest.TestCase):
         ):
             self.assertEqual(
                 MODULE.detect_html_open(),
-                {"available": True, "command": "gio", "path": "/usr/bin/gio"},
+                {
+                    "available": True,
+                    "strategy": "argv",
+                    "command": "gio",
+                    "path": "/usr/bin/gio",
+                    "argv_prefix": ["/usr/bin/gio", "open"],
+                },
             )
 
-    def test_detect_html_open_reports_windows_start(self):
+    def test_detect_html_open_reports_windows_startfile(self):
         with (
             patch.object(MODULE.sys, "platform", "win32"),
             patch.object(MODULE.shutil, "which") as which,
         ):
-            self.assertEqual(MODULE.detect_html_open(), {"available": True, "command": "start"})
+            self.assertEqual(
+                MODULE.detect_html_open(),
+                {
+                    "available": True,
+                    "strategy": "os.startfile",
+                    "command": None,
+                    "path": None,
+                    "argv_prefix": [],
+                },
+            )
         which.assert_not_called()
 
     def test_detect_html_open_reports_missing_opener(self):
@@ -65,12 +103,41 @@ class CheckEnvironmentTests(unittest.TestCase):
         ):
             self.assertEqual(
                 MODULE.detect_html_open(),
-                {"available": False, "command": None, "path": None},
+                {
+                    "available": False,
+                    "strategy": None,
+                    "command": None,
+                    "path": None,
+                    "argv_prefix": [],
+                },
             )
+
+    def test_detect_html_open_reports_missing_opener_on_macos(self):
+        with (
+            patch.object(MODULE.sys, "platform", "darwin"),
+            patch.object(MODULE.shutil, "which", return_value=None) as which,
+        ):
+            self.assertEqual(
+                MODULE.detect_html_open(),
+                {
+                    "available": False,
+                    "strategy": None,
+                    "command": None,
+                    "path": None,
+                    "argv_prefix": [],
+                },
+            )
+        which.assert_called_once_with("open")
 
     def test_build_report_has_stable_schema(self):
         missing_tool = {"available": False, "path": None}
-        missing_open = {"available": False, "command": None, "path": None}
+        missing_open = {
+            "available": False,
+            "strategy": None,
+            "command": None,
+            "path": None,
+            "argv_prefix": [],
+        }
         with (
             patch.object(MODULE, "detect_tool", return_value=missing_tool),
             patch.object(MODULE, "detect_html_open", return_value=missing_open),
@@ -97,6 +164,10 @@ class CheckEnvironmentTests(unittest.TestCase):
         )
         report = json.loads(result.stdout)
         self.assertTrue(report["python"]["available"])
+        self.assertEqual(
+            set(report["html_open"]),
+            {"available", "strategy", "command", "path", "argv_prefix"},
+        )
         self.assertIn('\n  "python": {', result.stdout)
 
 
