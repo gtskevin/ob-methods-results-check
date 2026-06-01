@@ -469,7 +469,11 @@ Create `tests/fixtures/sample-report.md`:
 
 Use [Agent Skills](https://agentskills.io/specification).
 
+Do not activate [unsafe link](javascript:alert("not executable")).
+
 {{Evidence status|Distinguish confirmed inconsistencies from items requiring raw-output review.}}
+
+<script>alert("raw html is not executable")</script>
 
 ```text
 <script>alert("not executable")</script>
@@ -508,6 +512,7 @@ class RenderReportTests(unittest.TestCase):
         self.assertIn('class="glossary"', rendered)
         self.assertIn("&lt;script&gt;alert", rendered)
         self.assertNotIn("<script>alert", rendered)
+        self.assertNotIn('href="javascript:', rendered)
 
     def test_choose_output_path_avoids_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
