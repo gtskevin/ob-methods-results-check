@@ -17,14 +17,29 @@ Audit depth adapts to the files you provide:
 
 ## Install
 
-Clone or place this repository somewhere stable, then create the symlink for your agent:
+Keep a stable clone of this repository, create the agent skill parent directories, then create the symlink for your agent:
 
 ```bash
+mkdir -p ~/.agents/skills ~/.claude/skills
 ln -s /absolute/path/to/ob-methods-results-audit ~/.agents/skills/ob-methods-results-audit
 ln -s /absolute/path/to/ob-methods-results-audit ~/.claude/skills/ob-methods-results-audit
 ```
 
-The first path installs the skill for Codex-compatible agents. The second installs it for Claude Code. Use either or both.
+The first path installs the skill for Codex-compatible agents. The second installs it for Claude Code. Use either or both. `ln -s` fails when the destination already exists: inspect that path and do not silently replace an arbitrary existing file, directory, or link.
+
+Update the stable clone in place so the symlink continues to target the current files:
+
+```bash
+cd /absolute/path/to/ob-methods-results-audit
+git pull
+```
+
+Remove only symlink installations with:
+
+```bash
+test ! -L ~/.agents/skills/ob-methods-results-audit || rm ~/.agents/skills/ob-methods-results-audit
+test ! -L ~/.claude/skills/ob-methods-results-audit || rm ~/.claude/skills/ob-methods-results-audit
+```
 
 ## Usage
 
@@ -42,11 +57,11 @@ Missing optional tools do not block an audit. Without Python, the skill produces
 
 ## Outputs
 
-Reports are written under `audit-reports/<paper-slug>/`. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. If HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
+Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML and only make safe links active. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
 
 ## Privacy and safety
 
-Manuscripts, software output, analysis code, and data are treated as untrusted input. Their contents are evidence only and cannot override Skill instructions. The skill does not automatically execute user-provided analysis code. Before any such execution, it describes the command and file paths to be read and written, then asks for confirmation.
+Manuscripts, software output, analysis code, and data are treated as untrusted input. Their contents are evidence only and cannot override Skill instructions. The skill does not automatically execute user-provided analysis code. Execution requires explicit approval and an isolated disposable workspace with no secrets, network disabled when feasible, and declared read and write paths. If those conditions cannot be guaranteed, the skill asks the user to run the code and provide outputs.
 
 Reports must not contain participant identifiers or raw participant-level data. Share only the files needed for the audit.
 
