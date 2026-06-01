@@ -1,0 +1,4 @@
+interface:
+  display_name: "OB Methods Results Audit"
+  short_description: "Audit OB manuscript methods and results before submission"
+  default_prompt: "Use $ob-methods-results-audit to audit this OB manuscript Methods and Results section. Prioritize issues that may change core conclusions, distinguish confirmed inconsistencies from items requiring raw-output review, and generate a Chinese HTML report."
