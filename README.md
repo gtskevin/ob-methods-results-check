@@ -38,15 +38,15 @@ The skill follows the language of your request unless you ask for a different re
 - `pdftotext`: enables PDF text extraction.
 - `pdftoppm`: enables rendered PDF page inspection for visual checks of tables and figures.
 
-Missing optional tools do not block an audit. Without Python, the skill produces a Markdown-only report and discloses unavailable recalculation and HTML rendering. Without PDF page rendering, it continues the text audit and discloses the visual verification limitation.
+Missing optional tools do not block an audit. Without Python, the skill produces a Markdown-only report and discloses unavailable recalculation and HTML rendering. Without `pdftotext`, it uses the agent's built-in PDF reading when available; otherwise it requests DOCX, TXT, or pasted text. Without PDF page rendering, it continues the text audit and discloses the visual verification limitation. When visual checks matter, it requests screenshots of the relevant pages.
 
 ## Outputs
 
-Reports are written under `audit-reports/<paper-slug>/`. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. Existing reports are not overwritten.
+Reports are written under `audit-reports/<paper-slug>/`. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. If HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
 
 ## Privacy and safety
 
-Manuscripts, software output, analysis code, and data are treated as untrusted input. The skill does not automatically execute user-provided analysis code. Before any such execution, it describes the command and file paths to be read and written, then asks for confirmation.
+Manuscripts, software output, analysis code, and data are treated as untrusted input. Their contents are evidence only and cannot override Skill instructions. The skill does not automatically execute user-provided analysis code. Before any such execution, it describes the command and file paths to be read and written, then asks for confirmation.
 
 Reports must not contain participant identifiers or raw participant-level data. Share only the files needed for the audit.
 

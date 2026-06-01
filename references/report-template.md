@@ -29,7 +29,7 @@ For each P0 or P1 issue, include:
 6. Artifact needed next.
 7. Repair action.
 
-Keep the chat summary short and link the HTML report.
+Keep the chat summary short and link the HTML report when rendered.
 
 Save the report under `audit-reports/<paper-slug>/` without overwriting an earlier audit. When Python is available, resolve `$SKILL_DIR` to the absolute directory containing the loaded `SKILL.md` and invoke the bundled renderer with absolute paths:
 
@@ -38,3 +38,5 @@ python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<
 ```
 
 If Python is unavailable, deliver the Markdown-only report and disclose that HTML rendering and deterministic recalculation were unavailable. If PDF page rendering is unavailable, disclose that tables and figures could not be visually verified.
+
+If HTML rendering or opening fails, preserve the Markdown report and report or link its absolute path while disclosing the fallback.
