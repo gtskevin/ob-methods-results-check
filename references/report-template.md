@@ -1,6 +1,6 @@
 # Report Template
 
-Write an editable Markdown report and render it to HTML.
+Write an editable Markdown report as the source of truth. Follow the user's language unless the user requests another language.
 
 Use:
 
@@ -31,3 +31,10 @@ For each P0 or P1 issue, include:
 
 Keep the chat summary short and link the HTML report.
 
+Save the report under `audit-reports/<paper-slug>/` without overwriting an earlier audit. When Python is available, resolve `$SKILL_DIR` to the absolute directory containing the loaded `SKILL.md` and invoke the bundled renderer with absolute paths:
+
+```bash
+python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
+```
+
+If Python is unavailable, deliver the Markdown-only report and disclose that HTML rendering and deterministic recalculation were unavailable. If PDF page rendering is unavailable, disclose that tables and figures could not be visually verified.
