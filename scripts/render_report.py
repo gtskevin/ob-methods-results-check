@@ -3,6 +3,7 @@ import argparse
 import html
 import os
 import re
+import tempfile
 import webbrowser
 from datetime import datetime
 from pathlib import Path
@@ -17,29 +18,27 @@ GLOSSARY = re.compile(r"\{\{([^|{}\n]+)\|([^{}\n]+)\}\}")
 INLINE_CODE = re.compile(r"`([^`\n]+)`")
 BOLD = re.compile(r"\*\*(.+?)\*\*")
 ENCODED_SEPARATOR = re.compile(r"%(?:2f|5c)", flags=re.IGNORECASE)
+PLACEHOLDER = re.compile(r"\x00MDTOKEN:(\d+)\x00")
 MAX_QUOTE_DEPTH = 64
+MAX_OUTPUT_ATTEMPTS = 100
 
 
 def is_safe_link(href):
-    if "\\" in href or ENCODED_SEPARATOR.search(href):
-        return False
-    return (
-        href.startswith(("http://", "https://", "#", "./", "../"))
-        or (href.startswith("/") and not href.startswith("//"))
+    if href.startswith(("http://", "https://", "#")):
+        return True
+    is_local_path = href.startswith(("./", "../")) or (
+        href.startswith("/") and not href.startswith("//")
     )
+    return is_local_path and "\\" not in href and not ENCODED_SEPARATOR.search(href)
 
 
 def render_inline(text):
-    escaped = html.escape(text, quote=True)
-    placeholders = {}
-    prefix = "\x00MDTOKEN"
-    while prefix in escaped:
-        prefix += "_"
+    escaped = html.escape(text, quote=True).replace("\x00", "&#0;")
+    placeholders = []
 
     def stash(rendered):
-        token = f"{prefix}{len(placeholders)}\x00"
-        placeholders[token] = rendered
-        return token
+        placeholders.append(rendered)
+        return f"\x00MDTOKEN:{len(placeholders) - 1}\x00"
 
     escaped = INLINE_CODE.sub(
         lambda match: stash(f"<code>{match.group(1)}</code>"),
@@ -62,8 +61,7 @@ def render_inline(text):
         escaped,
     )
     escaped = BOLD.sub(r"<strong>\1</strong>", escaped)
-    token_pattern = re.compile(rf"{re.escape(prefix)}\d+\x00")
-    return token_pattern.sub(lambda match: placeholders[match.group(0)], escaped)
+    return PLACEHOLDER.sub(lambda match: placeholders[int(match.group(1))], escaped)
 
 
 def split_table_row(line):
@@ -234,14 +232,39 @@ def choose_output_path(requested, overwrite=False, timestamp=None):
         return requested
 
     stamp = timestamp or datetime.now().strftime("%Y%m%d-%H%M%S")
-    candidate = requested.with_name(f"{requested.stem}-{stamp}{requested.suffix}")
-    version = 2
-    while os.path.lexists(candidate):
+    for version in range(1, MAX_OUTPUT_ATTEMPTS + 1):
+        version_suffix = "" if version == 1 else f"-{version}"
         candidate = requested.with_name(
-            f"{requested.stem}-{stamp}-{version}{requested.suffix}"
+            f"{requested.stem}-{stamp}{version_suffix}{requested.suffix}"
         )
-        version += 1
-    return candidate
+        if not os.path.lexists(candidate):
+            return candidate
+    raise FileExistsError(
+        f"Unable to choose an available output path after "
+        f"{MAX_OUTPUT_ATTEMPTS} attempts: {requested}"
+    )
+
+
+def atomic_replace_text(destination, text):
+    file_descriptor = None
+    temp_path = None
+    try:
+        file_descriptor, temp_name = tempfile.mkstemp(
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            text=True,
+        )
+        temp_path = Path(temp_name)
+        with os.fdopen(file_descriptor, "w", encoding="utf-8") as output_file:
+            file_descriptor = None
+            output_file.write(text)
+        os.replace(temp_path, destination)
+    finally:
+        if file_descriptor is not None:
+            os.close(file_descriptor)
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
 
 
 def write_html(source, output=None, overwrite=False, open_browser=False):
@@ -257,10 +280,10 @@ def write_html(source, output=None, overwrite=False, open_browser=False):
     document = build_document(render_markdown(markdown_text), title)
     if overwrite:
         destination = choose_output_path(requested, overwrite=True)
-        destination.write_text(document, encoding="utf-8")
+        atomic_replace_text(destination, document)
     else:
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        while True:
+        for _attempt in range(MAX_OUTPUT_ATTEMPTS):
             destination = choose_output_path(
                 requested,
                 overwrite=False,
@@ -272,6 +295,11 @@ def write_html(source, output=None, overwrite=False, open_browser=False):
             except FileExistsError:
                 continue
             break
+        else:
+            raise FileExistsError(
+                f"Unable to create output file after "
+                f"{MAX_OUTPUT_ATTEMPTS} attempts: {requested}"
+            )
     if open_browser:
         try:
             webbrowser.open(destination.resolve().as_uri())

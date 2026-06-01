@@ -2,6 +2,7 @@ import importlib.util
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -54,6 +55,14 @@ class RenderReportTests(unittest.TestCase):
             '<a href="https://agentskills.io/specification">Agent Skills</a>',
         )
 
+    def test_render_inline_activates_https_link_with_encoded_separator(self):
+        rendered = MODULE.render_inline("[report](https://example.com/a%2Fb)")
+
+        self.assertEqual(
+            rendered,
+            '<a href="https://example.com/a%2Fb">report</a>',
+        )
+
     def test_render_inline_activates_http_link_and_escapes_query(self):
         rendered = MODULE.render_inline("[report](http://example.com/report?a=1&b=2)")
 
@@ -98,6 +107,18 @@ class RenderReportTests(unittest.TestCase):
 
         self.assertEqual(rendered.count("<code>"), 2000)
         self.assertIn("<code>item-1999</code>", rendered)
+
+    def test_render_inline_handles_long_crafted_token_like_text(self):
+        crafted = "\x00MDTOKEN" + "_" * 20000 + '<script>alert("raw")</script>'
+
+        started = time.monotonic()
+        rendered = MODULE.render_inline(crafted)
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 1.0)
+        self.assertNotIn("\x00", rendered)
+        self.assertIn("&lt;script&gt;alert", rendered)
+        self.assertNotIn("<script>", rendered)
 
     def test_render_markdown_limits_quote_nesting_depth(self):
         rendered = MODULE.render_markdown(
@@ -147,6 +168,22 @@ class RenderReportTests(unittest.TestCase):
                 MODULE.choose_output_path(requested, overwrite=True),
                 requested,
             )
+
+    def test_choose_output_path_bounds_hostile_collisions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            requested = Path(tmp) / "report.html"
+            attempts = 0
+
+            def always_exists(_path):
+                nonlocal attempts
+                attempts += 1
+                if attempts > 110:
+                    raise AssertionError("output path search was not bounded")
+                return True
+
+            with patch.object(MODULE.os.path, "lexists", side_effect=always_exists):
+                with self.assertRaisesRegex(FileExistsError, "after .* attempts"):
+                    MODULE.choose_output_path(requested, overwrite=False)
 
     def test_open_failure_preserves_generated_html_and_returns_destination(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -207,6 +244,27 @@ class RenderReportTests(unittest.TestCase):
             self.assertNotEqual(result, output)
             self.assertIn("<!doctype html>", result.read_text(encoding="utf-8"))
 
+    def test_write_html_bounds_retries_if_destinations_keep_appearing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "report.html"
+            output.write_text("raced", encoding="utf-8")
+            attempts = 0
+
+            def choose_existing_output(*_args, **_kwargs):
+                nonlocal attempts
+                attempts += 1
+                if attempts > 110:
+                    raise AssertionError("exclusive creation retry loop was not bounded")
+                return output
+
+            with patch.object(
+                MODULE,
+                "choose_output_path",
+                side_effect=choose_existing_output,
+            ):
+                with self.assertRaisesRegex(FileExistsError, "after .* attempts"):
+                    MODULE.write_html(FIXTURE, output, overwrite=False)
+
     def test_write_html_refuses_dangling_symlink_without_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "missing-target.html"
@@ -218,16 +276,29 @@ class RenderReportTests(unittest.TestCase):
 
             self.assertFalse(target.exists())
 
-    def test_write_html_allows_explicit_overwrite_through_symlink(self):
+    def test_write_html_overwrite_replaces_symlink_without_touching_victim(self):
         with tempfile.TemporaryDirectory() as tmp:
-            target = Path(tmp) / "target.html"
+            target = Path(tmp) / "victim.html"
+            target.write_text("victim content", encoding="utf-8")
             output = Path(tmp) / "report.html"
             self.make_symlink_or_skip(output, target)
 
             result = MODULE.write_html(FIXTURE, output, overwrite=True)
 
             self.assertEqual(result, output)
-            self.assertIn("<!doctype html>", target.read_text(encoding="utf-8"))
+            self.assertEqual(target.read_text(encoding="utf-8"), "victim content")
+            self.assertFalse(output.is_symlink())
+            self.assertIn("<!doctype html>", output.read_text(encoding="utf-8"))
+
+    def test_write_html_overwrite_cleans_temp_file_if_replace_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "report.html"
+
+            with patch.object(MODULE.os, "replace", side_effect=OSError("replace failed")):
+                with self.assertRaisesRegex(OSError, "replace failed"):
+                    MODULE.write_html(FIXTURE, output, overwrite=True)
+
+            self.assertEqual(list(Path(tmp).iterdir()), [])
 
     def test_write_html_creates_standalone_reading_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
