@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import html
+import os
 import re
 import webbrowser
 from datetime import datetime
@@ -15,9 +16,13 @@ LINK = re.compile(r"\[([^\]\n]+)\]\(([^)\n]*)\)")
 GLOSSARY = re.compile(r"\{\{([^|{}\n]+)\|([^{}\n]+)\}\}")
 INLINE_CODE = re.compile(r"`([^`\n]+)`")
 BOLD = re.compile(r"\*\*(.+?)\*\*")
+ENCODED_SEPARATOR = re.compile(r"%(?:2f|5c)", flags=re.IGNORECASE)
+MAX_QUOTE_DEPTH = 64
 
 
 def is_safe_link(href):
+    if "\\" in href or ENCODED_SEPARATOR.search(href):
+        return False
     return (
         href.startswith(("http://", "https://", "#", "./", "../"))
         or (href.startswith("/") and not href.startswith("//"))
@@ -57,9 +62,8 @@ def render_inline(text):
         escaped,
     )
     escaped = BOLD.sub(r"<strong>\1</strong>", escaped)
-    for token, rendered in placeholders.items():
-        escaped = escaped.replace(token, rendered)
-    return escaped
+    token_pattern = re.compile(rf"{re.escape(prefix)}\d+\x00")
+    return token_pattern.sub(lambda match: placeholders[match.group(0)], escaped)
 
 
 def split_table_row(line):
@@ -99,7 +103,7 @@ def starts_block(lines, index):
     return index + 1 < len(lines) and "|" in line and is_table_separator(lines[index + 1])
 
 
-def render_markdown(markdown_text):
+def render_markdown(markdown_text, quote_depth=0):
     lines = markdown_text.splitlines()
     output = []
     index = 0
@@ -147,8 +151,11 @@ def render_markdown(markdown_text):
             while index < len(lines) and lines[index].strip().startswith(">"):
                 quote_lines.append(lines[index].strip()[1:].lstrip())
                 index += 1
-            quote = render_markdown("\n".join(quote_lines))
-            output.append(f"<blockquote>{quote}</blockquote>")
+            if quote_depth >= MAX_QUOTE_DEPTH:
+                output.append(f"<p>{render_inline(' '.join(quote_lines))}</p>")
+            else:
+                quote = render_markdown("\n".join(quote_lines), quote_depth + 1)
+                output.append(f"<blockquote>{quote}</blockquote>")
             continue
 
         if ORDERED_ITEM.match(line):
@@ -217,13 +224,19 @@ pre code {{ background: transparent; padding: 0; }}
 
 def choose_output_path(requested, overwrite=False, timestamp=None):
     requested = Path(requested)
-    if overwrite or not requested.exists():
+    if overwrite:
+        return requested
+    if requested.is_symlink():
+        raise FileExistsError(
+            f"Refusing to write through symlink without --overwrite: {requested}"
+        )
+    if not os.path.lexists(requested):
         return requested
 
     stamp = timestamp or datetime.now().strftime("%Y%m%d-%H%M%S")
     candidate = requested.with_name(f"{requested.stem}-{stamp}{requested.suffix}")
     version = 2
-    while candidate.exists():
+    while os.path.lexists(candidate):
         candidate = requested.with_name(
             f"{requested.stem}-{stamp}-{version}{requested.suffix}"
         )
@@ -237,15 +250,28 @@ def write_html(source, output=None, overwrite=False, open_browser=False):
         raise FileNotFoundError(f"Markdown source not found: {source}")
 
     requested = Path(output) if output else source.with_suffix(".html")
-    destination = choose_output_path(requested, overwrite=overwrite)
-    destination.parent.mkdir(parents=True, exist_ok=True)
+    requested.parent.mkdir(parents=True, exist_ok=True)
     markdown_text = source.read_text(encoding="utf-8")
     title_match = re.search(r"^#\s+(.+)$", markdown_text, flags=re.MULTILINE)
     title = title_match.group(1) if title_match else source.stem
-    destination.write_text(
-        build_document(render_markdown(markdown_text), title),
-        encoding="utf-8",
-    )
+    document = build_document(render_markdown(markdown_text), title)
+    if overwrite:
+        destination = choose_output_path(requested, overwrite=True)
+        destination.write_text(document, encoding="utf-8")
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        while True:
+            destination = choose_output_path(
+                requested,
+                overwrite=False,
+                timestamp=timestamp,
+            )
+            try:
+                with destination.open("x", encoding="utf-8") as output_file:
+                    output_file.write(document)
+            except FileExistsError:
+                continue
+            break
     if open_browser:
         try:
             webbrowser.open(destination.resolve().as_uri())
@@ -270,6 +296,8 @@ def main():
             overwrite=args.overwrite,
             open_browser=args.open_browser,
         )
+    except UnicodeDecodeError:
+        parser.error(f"Markdown source is not valid UTF-8: {args.source}")
     except OSError as exc:
         parser.error(str(exc))
     print(destination)

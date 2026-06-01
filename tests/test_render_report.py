@@ -16,6 +16,12 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RenderReportTests(unittest.TestCase):
+    def make_symlink_or_skip(self, link, target):
+        try:
+            link.symlink_to(target)
+        except (NotImplementedError, OSError) as exc:
+            self.skipTest(f"symlinks unsupported: {exc}")
+
     def test_render_markdown_supports_report_syntax_and_unicode(self):
         rendered = MODULE.render_markdown(FIXTURE.read_text(encoding="utf-8"))
 
@@ -62,6 +68,18 @@ class RenderReportTests(unittest.TestCase):
                 rendered = MODULE.render_inline(f"[report]({target})")
                 self.assertEqual(rendered, f'<a href="{target}">report</a>')
 
+    def test_render_inline_rejects_local_links_with_encoded_or_backslash_separators(self):
+        for target in (
+            r"/\example.com/share",
+            "/%2fexample.com/share",
+            "./%5Cexample.com/share",
+            "../%2F/example.com/share",
+        ):
+            with self.subTest(target=target):
+                rendered = MODULE.render_inline(f"[unsafe]({target})")
+                self.assertNotIn("<a ", rendered)
+                self.assertNotIn("href=", rendered)
+
     def test_render_inline_leaves_unsafe_links_inert(self):
         for target in (
             'javascript:alert("not executable")',
@@ -74,6 +92,21 @@ class RenderReportTests(unittest.TestCase):
                 self.assertNotIn("<a ", rendered)
                 self.assertNotIn("href=", rendered)
                 self.assertIn("[unsafe]", rendered)
+
+    def test_render_inline_restores_many_placeholders(self):
+        rendered = MODULE.render_inline(" ".join(f"`item-{index}`" for index in range(2000)))
+
+        self.assertEqual(rendered.count("<code>"), 2000)
+        self.assertIn("<code>item-1999</code>", rendered)
+
+    def test_render_markdown_limits_quote_nesting_depth(self):
+        rendered = MODULE.render_markdown(
+            "> " * 1200 + '<script>alert("deep quote")</script>'
+        )
+
+        self.assertLessEqual(rendered.count("<blockquote>"), MODULE.MAX_QUOTE_DEPTH)
+        self.assertIn("&lt;script&gt;alert", rendered)
+        self.assertNotIn("<script>", rendered)
 
     def test_choose_output_path_avoids_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -134,6 +167,68 @@ class RenderReportTests(unittest.TestCase):
             self.assertTrue(output.exists())
             self.assertIn("<!doctype html>", output.read_text(encoding="utf-8"))
 
+    def test_open_false_preserves_generated_html_and_returns_destination(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "report.html"
+            with patch.object(MODULE.webbrowser, "open", return_value=False):
+                result = MODULE.write_html(
+                    FIXTURE,
+                    output,
+                    overwrite=False,
+                    open_browser=True,
+                )
+
+            self.assertEqual(result, output)
+            self.assertTrue(output.exists())
+            self.assertIn("<!doctype html>", output.read_text(encoding="utf-8"))
+
+    def test_write_html_retries_if_destination_appears_before_creation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "report.html"
+            original_choose_output_path = MODULE.choose_output_path
+            raced = False
+
+            def choose_output_path_with_race(*args, **kwargs):
+                nonlocal raced
+                destination = original_choose_output_path(*args, **kwargs)
+                if not raced:
+                    destination.write_text("raced", encoding="utf-8")
+                    raced = True
+                return destination
+
+            with patch.object(
+                MODULE,
+                "choose_output_path",
+                side_effect=choose_output_path_with_race,
+            ):
+                result = MODULE.write_html(FIXTURE, output, overwrite=False)
+
+            self.assertEqual(output.read_text(encoding="utf-8"), "raced")
+            self.assertNotEqual(result, output)
+            self.assertIn("<!doctype html>", result.read_text(encoding="utf-8"))
+
+    def test_write_html_refuses_dangling_symlink_without_overwrite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "missing-target.html"
+            output = Path(tmp) / "report.html"
+            self.make_symlink_or_skip(output, target)
+
+            with self.assertRaisesRegex(FileExistsError, "symlink"):
+                MODULE.write_html(FIXTURE, output, overwrite=False)
+
+            self.assertFalse(target.exists())
+
+    def test_write_html_allows_explicit_overwrite_through_symlink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target.html"
+            output = Path(tmp) / "report.html"
+            self.make_symlink_or_skip(output, target)
+
+            result = MODULE.write_html(FIXTURE, output, overwrite=True)
+
+            self.assertEqual(result, output)
+            self.assertIn("<!doctype html>", target.read_text(encoding="utf-8"))
+
     def test_write_html_creates_standalone_reading_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "nested" / "report.html"
@@ -168,6 +263,21 @@ class RenderReportTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Markdown source not found", result.stderr)
+
+    def test_malformed_utf8_source_returns_concise_cli_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "malformed.md"
+            source.write_bytes(b"# malformed\n\xff")
+
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), str(source)],
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Markdown source is not valid UTF-8", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
 
 
 if __name__ == "__main__":
