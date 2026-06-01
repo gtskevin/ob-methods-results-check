@@ -19,6 +19,7 @@ INLINE_CODE = re.compile(r"`([^`\n]+)`")
 BOLD = re.compile(r"\*\*(.+?)\*\*")
 ENCODED_SEPARATOR = re.compile(r"%(?:2f|5c)", flags=re.IGNORECASE)
 PLACEHOLDER = re.compile(r"\x00MDTOKEN:(\d+)\x00")
+MAX_PLACEHOLDER_DEPTH = 8
 MAX_QUOTE_DEPTH = 64
 MAX_OUTPUT_ATTEMPTS = 100
 
@@ -30,6 +31,34 @@ def is_safe_link(href):
         href.startswith("/") and not href.startswith("//")
     )
     return is_local_path and "\\" not in href and not ENCODED_SEPARATOR.search(href)
+
+
+def restore_placeholders(text, placeholders):
+    resolved = []
+    depths = []
+
+    for rendered in placeholders:
+        depth = 0
+
+        def restore_dependency(match):
+            nonlocal depth
+            index = int(match.group(1))
+            if index >= len(resolved):
+                return ""
+            depth = max(depth, depths[index] + 1)
+            return resolved[index] if depth <= MAX_PLACEHOLDER_DEPTH else ""
+
+        resolved.append(PLACEHOLDER.sub(restore_dependency, rendered))
+        depths.append(depth)
+
+    def restore_output(match):
+        index = int(match.group(1))
+        if index >= len(resolved) or depths[index] > MAX_PLACEHOLDER_DEPTH:
+            return ""
+        return resolved[index]
+
+    restored = PLACEHOLDER.sub(restore_output, text)
+    return PLACEHOLDER.sub("", restored).replace("\x00", "&#0;")
 
 
 def render_inline(text):
@@ -61,7 +90,7 @@ def render_inline(text):
         escaped,
     )
     escaped = BOLD.sub(r"<strong>\1</strong>", escaped)
-    return PLACEHOLDER.sub(lambda match: placeholders[int(match.group(1))], escaped)
+    return restore_placeholders(escaped, placeholders)
 
 
 def split_table_row(line):

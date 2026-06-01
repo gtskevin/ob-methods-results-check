@@ -55,6 +55,31 @@ class RenderReportTests(unittest.TestCase):
             '<a href="https://agentskills.io/specification">Agent Skills</a>',
         )
 
+    def test_render_inline_restores_code_inside_link_label(self):
+        rendered = MODULE.render_inline("[`code`](https://example.com)")
+
+        self.assertEqual(
+            rendered,
+            '<a href="https://example.com"><code>code</code></a>',
+        )
+        self.assertNotIn("\x00", rendered)
+        self.assertNotIn("MDTOKEN", rendered)
+
+    def test_render_inline_restores_nested_glossary_content(self):
+        rendered = MODULE.render_inline(
+            "{{`Evidence`|See [guide](https://example.com/guide).}}"
+        )
+
+        self.assertEqual(
+            rendered,
+            '<span class="glossary"><code>Evidence</code>'
+            '<span class="glossary-tip">See '
+            '<a href="https://example.com/guide">guide</a>.'
+            "</span></span>",
+        )
+        self.assertNotIn("\x00", rendered)
+        self.assertNotIn("MDTOKEN", rendered)
+
     def test_render_inline_activates_https_link_with_encoded_separator(self):
         rendered = MODULE.render_inline("[report](https://example.com/a%2Fb)")
 
@@ -119,6 +144,20 @@ class RenderReportTests(unittest.TestCase):
         self.assertNotIn("\x00", rendered)
         self.assertIn("&lt;script&gt;alert", rendered)
         self.assertNotIn("<script>", rendered)
+
+    def test_render_inline_mixed_nesting_terminates_without_marker_leakage(self):
+        crafted = (
+            "[{{`Evidence`|See [guide](https://example.com/guide).}}]"
+            "(https://example.com/report)"
+        )
+
+        started = time.monotonic()
+        rendered = MODULE.render_inline(crafted)
+        elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 1.0)
+        self.assertNotIn("\x00", rendered)
+        self.assertNotIn("MDTOKEN", rendered)
 
     def test_render_markdown_limits_quote_nesting_depth(self):
         rendered = MODULE.render_markdown(
