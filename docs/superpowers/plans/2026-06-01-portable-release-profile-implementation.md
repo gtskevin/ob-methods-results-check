@@ -980,7 +980,10 @@ jobs:
       - name: Install Agent Skills validator
         run: python -m pip install skills-ref
       - name: Validate Agent Skills package
-        run: agentskills validate .
+        run: |
+          mkdir -p /tmp/agent-skills-validation
+          ln -s "$GITHUB_WORKSPACE" /tmp/agent-skills-validation/ob-methods-results-audit
+          agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
 ```
 
 - [ ] **Step 2: Add contributor verification commands to README**
@@ -993,7 +996,10 @@ Append:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-agentskills validate .
+rm -rf /tmp/agent-skills-validation
+mkdir -p /tmp/agent-skills-validation
+ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
+agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
 ```
 
 GitHub CLI 2.90.0 or later also provides a public-preview publishing check:
@@ -1020,7 +1026,10 @@ Run in an isolated temporary environment:
 ```bash
 python3 -m venv /tmp/ob-methods-results-audit-validate
 /tmp/ob-methods-results-audit-validate/bin/python -m pip install skills-ref
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate .
+rm -rf /tmp/agent-skills-validation
+mkdir -p /tmp/agent-skills-validation
+ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
+/tmp/ob-methods-results-audit-validate/bin/agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
 ```
 
 Expected: validator exits `0` with no Agent Skills specification errors.
@@ -1094,7 +1103,7 @@ Expected: HTML is generated and readable without invoking `pretty-doc`.
 Run:
 
 ```bash
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate .
+/tmp/ob-methods-results-audit-validate/bin/agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
 ```
 
 Expected: exit `0`.

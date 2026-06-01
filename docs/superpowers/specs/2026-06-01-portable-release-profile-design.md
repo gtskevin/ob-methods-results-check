@@ -327,7 +327,7 @@ default_prompt: "Use $ob-methods-results-audit to audit this manuscript's Method
 | 安全规则 | 防止盲目执行用户代码和泄露敏感数据 |
 | 跨语言默认行为 | 适配公开用户 |
 | README 与许可证 | 让用户能安装、理解边界并合法复用 |
-| Agent Skills 规范验证 | 用 `skills-ref validate` 检查 frontmatter、命名和目录约定 |
+| Agent Skills 规范验证 | 安装 `skills-ref` reference library，用 `agentskills validate` 检查 frontmatter、命名和目录约定 |
 
 ### P1：发布前建议完成
 
@@ -376,7 +376,7 @@ Portable Release Profile 完成后，应满足：
 8. 用户语言决定报告语言。
 9. manuscript-only audit 不被描述为原始数据复现。
 10. GitHub 用户能够通过 README 完成安装并理解能力边界。
-11. `skills-ref validate` 通过。
+11. `agentskills validate` 通过。
 
 ## 13. 实施顺序
 
@@ -385,7 +385,7 @@ Portable Release Profile 完成后，应满足：
 3. 新增 `scripts/render_report.py`。
 4. 更新报告模板。
 5. 增加 README、`LICENSE.txt`、测试夹具和脚本测试。
-6. 运行 `skills-ref validate`。
+6. 安装 `skills-ref` reference library 并运行 `agentskills validate`。
 7. 运行现有与新增单元测试。
 8. 用一个 PDF 场景和一个降级场景做端到端验证。
 9. 在干净上下文中做 Skill 行为回归测试。
@@ -394,7 +394,7 @@ Portable Release Profile 完成后，应满足：
 
 本设计基于以下公开规范和官方文档：
 
-1. [Agent Skills Specification](https://agentskills.io/specification)：定义 `SKILL.md`、`scripts/`、`references/`、`assets/`、相对路径引用、`license`、`compatibility` 和 `skills-ref validate`。
+1. [Agent Skills Specification](https://agentskills.io/specification)：定义 `SKILL.md`、`scripts/`、`references/`、`assets/`、相对路径引用、`license`、`compatibility` 和 `skills-ref` reference library。当前 PyPI 包安装后的命令行为 `agentskills validate <skill-path>`。
 2. [OpenAI Codex Agent Skills](https://developers.openai.com/codex/skills)：说明 Codex 的 `.agents/skills` 发现路径、显式与隐式触发、渐进式加载和可选 `agents/openai.yaml`。
 3. [Claude Code Skills](https://code.claude.com/docs/en/skills)：说明 Claude Code 的 `.claude/skills` 路径、支持文件和 `${CLAUDE_SKILL_DIR}`。
 
