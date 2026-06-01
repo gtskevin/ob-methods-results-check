@@ -993,6 +993,7 @@ jobs:
         run: python -m pip install skills-ref
       - name: Validate Agent Skills package
         run: |
+          rm -rf /tmp/agent-skills-validation
           mkdir -p /tmp/agent-skills-validation
           ln -s "$GITHUB_WORKSPACE" /tmp/agent-skills-validation/ob-methods-results-audit
           agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
