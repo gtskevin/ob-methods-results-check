@@ -25,9 +25,16 @@ For each P0 or P1 issue, include:
 2. Current claim.
 3. Evidence or recalculation.
 4. Why it matters.
-5. Evidence status.
+5. Stable evidence code and localized display label.
 6. Artifact needed next.
 7. Repair action.
+
+Use one stable evidence code for each issue, paired with a localized display label:
+
+- `CONFIRMED`
+- `LIKELY`
+- `REVIEW_REQUIRED`
+- `WORDING`
 
 Keep the chat summary short and link the HTML report when rendered.
 
@@ -45,8 +52,8 @@ When Python is available, invoke the bundled renderer with absolute paths:
 python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
 ```
 
-The HTML renderer must escape untrusted raw HTML and only make safe links active. If safe HTML rendering is unavailable, deliver the Markdown path.
+The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, `/`, `./`, or `../`; render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
 
-If Python or a bundled helper command fails, preserve the audit, disclose the failure, and continue with manual evidence review where feasible. If Python is unavailable, deliver the Markdown-only report and disclose that HTML rendering and deterministic recalculation were unavailable. If PDF page rendering is unavailable, disclose that tables and figures could not be visually verified.
+If Python or a bundled helper command fails, preserve the audit, disclose the failure, and continue with manual evidence review where feasible. If Python is unavailable, deliver the Markdown-only report and disclose that HTML rendering and deterministic recalculation were unavailable. If PDF text extraction is unavailable or fails on a document, use built-in PDF reading or request DOCX, TXT, or pasted text. If PDF page rendering is unavailable or fails on a document, disclose that tables and figures could not be visually verified and request screenshots of the relevant pages when visual checks matter.
 
 If HTML rendering or opening fails, preserve the Markdown report and report or link its absolute path while disclosing the fallback.

@@ -73,12 +73,25 @@ class SkillContractTests(unittest.TestCase):
             "explicit approval",
             "isolated disposable workspace",
             "no secrets",
-            "network disabled when feasible",
+            "network disabled",
             "declared read and write paths",
             "ask the user to run the code and provide outputs",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, skill)
+
+        self.assertNotIn("network disabled when feasible", skill)
+
+    def test_pdf_fallbacks_cover_missing_or_failed_optional_tools(self):
+        skill = (ROOT / "SKILL.md").read_text()
+        readme = (ROOT / "README.md").read_text()
+
+        for text in (skill, readme):
+            with self.subTest(source=text[:20]):
+                self.assertIn("unavailable or fails", text)
+                self.assertIn("built-in PDF reading", text)
+                self.assertIn("DOCX, TXT, or pasted text", text)
+                self.assertIn("screenshots of the relevant pages", text)
 
     def test_skill_and_template_preserve_markdown_when_html_delivery_fails(self):
         skill = (ROOT / "SKILL.md").read_text()
@@ -97,10 +110,20 @@ class SkillContractTests(unittest.TestCase):
         for text in (skill, template):
             with self.subTest(source=text[:20]):
                 self.assertIn("escape untrusted raw HTML", text)
-                self.assertIn("only make safe links active", text)
                 self.assertIn("directory containing the manuscript", text)
                 self.assertIn("user-approved workspace directory", text)
                 self.assertIn("installed Skill directory", text)
+
+    def test_safe_link_contract_uses_explicit_allowlist(self):
+        skill = (ROOT / "SKILL.md").read_text()
+        template = (ROOT / "references" / "report-template.md").read_text()
+        readme = (ROOT / "README.md").read_text()
+
+        for text in (skill, template, readme):
+            with self.subTest(source=text[:20]):
+                for prefix in ("`http://`", "`https://`", "`#`", "`/`", "`./`", "`../`"):
+                    self.assertIn(prefix, text)
+                self.assertIn("render other link targets as inert text", text)
 
     def test_report_template_requires_localized_headings_and_statuses(self):
         template = (ROOT / "references" / "report-template.md").read_text()
@@ -108,6 +131,18 @@ class SkillContractTests(unittest.TestCase):
         self.assertIn("Localize every heading and status label", template)
         self.assertNotIn("**状态：** 待评审", template)
         self.assertNotIn("## 1. Overall assessment", template)
+
+    def test_evidence_statuses_use_stable_codes_and_localized_labels(self):
+        skill = (ROOT / "SKILL.md").read_text()
+        template = (ROOT / "references" / "report-template.md").read_text()
+
+        for text in (skill, template):
+            with self.subTest(source=text[:20]):
+                for code in ("`CONFIRMED`", "`LIKELY`", "`REVIEW_REQUIRED`", "`WORDING`"):
+                    self.assertIn(code, text)
+                self.assertIn("localized display label", text)
+
+        self.assertIn("Chinese report examples", skill)
 
     def test_release_files_document_installation_and_dependencies(self):
         readme_path = ROOT / "README.md"
