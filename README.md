@@ -57,7 +57,7 @@ Missing optional tools do not block an audit. Without Python, the skill produces
 
 ## Outputs
 
-Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML. It activates only link targets beginning with `http://`, `https://`, `#`, `/`, `./`, or `../`; it must render other link targets as inert text. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
+Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML. It activates only link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; it must not activate `//` remote-host paths and must render other link targets as inert text. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
 
 ## Privacy and safety
 

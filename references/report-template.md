@@ -52,7 +52,7 @@ When Python is available, invoke the bundled renderer with absolute paths:
 python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
 ```
 
-The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, `/`, `./`, or `../`; render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
+The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; do not activate `//` remote-host paths, and render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
 
 If Python or a bundled helper command fails, preserve the audit, disclose the failure, and continue with manual evidence review where feasible. If Python is unavailable, deliver the Markdown-only report and disclose that HTML rendering and deterministic recalculation were unavailable. If PDF text extraction is unavailable or fails on a document, use built-in PDF reading or request DOCX, TXT, or pasted text. If PDF page rendering is unavailable or fails on a document, disclose that tables and figures could not be visually verified and request screenshots of the relevant pages when visual checks matter.
 

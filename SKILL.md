@@ -82,7 +82,7 @@ If Python or a bundled helper command fails, preserve the audit, disclose the fa
 python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
 ```
 
-The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, `/`, `./`, or `../`; render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
+The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; do not activate `//` remote-host paths, and render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
 
 9. Keep the chat response short and link the HTML report when rendered. If HTML rendering or opening fails, preserve the Markdown report and report or link its absolute path while disclosing the fallback.
 

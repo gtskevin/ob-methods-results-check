@@ -123,6 +123,7 @@ class SkillContractTests(unittest.TestCase):
             with self.subTest(source=text[:20]):
                 for prefix in ("`http://`", "`https://`", "`#`", "`/`", "`./`", "`../`"):
                     self.assertIn(prefix, text)
+                self.assertIn("`//` remote-host paths", text)
                 self.assertIn("render other link targets as inert text", text)
 
     def test_report_template_requires_localized_headings_and_statuses(self):

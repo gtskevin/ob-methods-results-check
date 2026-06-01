@@ -471,6 +471,8 @@ Use [Agent Skills](https://agentskills.io/specification).
 
 Do not activate [unsafe link](javascript:alert("not executable")).
 
+Do not activate [remote-host path](//example.com/share).
+
 {{Evidence status|Distinguish confirmed inconsistencies from items requiring raw-output review.}}
 
 <script>alert("raw html is not executable")</script>
@@ -513,6 +515,7 @@ class RenderReportTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;alert", rendered)
         self.assertNotIn("<script>alert", rendered)
         self.assertNotIn('href="javascript:', rendered)
+        self.assertNotIn('href="//example.com', rendered)
 
     def test_choose_output_path_avoids_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -600,7 +603,11 @@ def render_inline(text):
 
     def render_link(match):
         label, href = match.group(1), html.unescape(match.group(2))
-        if not (href.startswith(("http://", "https://", "#", "/", "./", "../"))):
+        is_safe = (
+            href.startswith(("http://", "https://", "#", "./", "../"))
+            or (href.startswith("/") and not href.startswith("//"))
+        )
+        if not is_safe:
             return match.group(0)
         safe_href = html.escape(href, quote=True)
         return stash(f'<a href="{safe_href}">{label}</a>')

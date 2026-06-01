@@ -127,7 +127,7 @@ audit-reports/<paper-slug>/
 1. 仅依赖 Python 标准库；
 2. 输入 Markdown，输出独立 HTML；
 3. 支持标题、段落、列表、表格、代码块、引用、链接和基础样式；
-4. 对 Markdown 原文进行 HTML escaping，只激活 `http://`、`https://`、`#`、`/`、`./` 和 `../` 链接；其他链接目标作为无交互文本显示；
+4. 对 Markdown 原文进行 HTML escaping，只激活 `http://`、`https://`、`#`、单斜杠开头的本地绝对路径、`./` 和 `../` 链接；不激活 `//` 开头的远程主机形式，其他链接目标作为无交互文本显示；
 5. 保留 Unicode；
 6. 不依赖 `pretty-doc`；
 7. 在可用时尝试打开浏览器，但打开失败不影响交付。
