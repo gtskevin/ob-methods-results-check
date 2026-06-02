@@ -86,6 +86,10 @@ If Python or a bundled helper command fails, preserve the audit, disclose the fa
 python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
 ```
 
+The renderer auto-generates the HTML filename from the report title (e.g., `研究三.html`). Override with `--output <path>`.
+
+After rendering, the script prints the absolute path (e.g., `Report saved: /path/to/file.html`). Always include this path in your chat response so the user can open it manually. Use `--open` to open in the default browser; use `--folder` to reveal the file in Finder/Explorer.
+
 The HTML renderer must escape untrusted raw HTML. Only activate link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; do not activate `//` remote-host paths. For local paths, do not activate backslashes or encoded separators. Render other link targets as inert text. If safe HTML rendering is unavailable, deliver the Markdown path.
 
 9. Keep the chat response short and link the HTML report when rendered. If HTML rendering or opening fails, preserve the Markdown report and report or link its absolute path while disclosing the fallback.
