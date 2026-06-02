@@ -198,4 +198,4 @@ gh skill publish --dry-run
 
 ## 许可证
 
-[MIT License](LICENSE.txt) © 2026 Huang Mingpeng
+[MIT License](LICENSE.txt) © 2026 gtskevin
