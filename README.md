@@ -57,7 +57,7 @@ Missing optional tools do not block an audit. Without Python, the skill produces
 
 ## Outputs
 
-Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML. It activates only link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; it must not activate `//` remote-host paths and must render other link targets as inert text. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
+Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML. It activates only link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; it must not activate `//` remote-host paths. For local paths, backslashes and encoded separators remain inert. It must render other link targets as inert text. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
 
 ## Privacy and safety
 
@@ -72,3 +72,24 @@ This skill supports pre-submission review; it does not certify statistical corre
 ## License
 
 Released under the [MIT License](LICENSE.txt).
+
+## Verify
+
+Run the local suite and validate the Agent Skills package:
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m pip install skills-ref
+rm -rf /tmp/agent-skills-validation
+mkdir -p /tmp/agent-skills-validation
+ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
+agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
+```
+
+The temporary symlink is required because the validator expects the directory name to match the Skill name.
+
+GitHub CLI 2.90.0 or later also provides a public-preview publishing check:
+
+```bash
+gh skill publish --dry-run
+```

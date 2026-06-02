@@ -124,7 +124,8 @@ class SkillContractTests(unittest.TestCase):
                 for prefix in ("`http://`", "`https://`", "`#`", "`/`", "`./`", "`../`"):
                     self.assertIn(prefix, text)
                 self.assertIn("`//` remote-host paths", text)
-                self.assertIn("render other link targets as inert text", text)
+                self.assertIn("encoded separators", text)
+                self.assertIn("render other link targets as inert text", text.lower())
 
     def test_report_template_requires_localized_headings_and_statuses(self):
         template = (ROOT / "references" / "report-template.md").read_text()
