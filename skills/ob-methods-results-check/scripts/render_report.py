@@ -130,10 +130,22 @@ def render_markdown(md, qd=0):
 
 def _build_toc(body):
     entries = []
+    severity_sections = {}
     for m in re.finditer(r'<h([23])\s+id="([^"]*)"[^>]*>(.*?)</h\1>', body, re.DOTALL):
         lv, aid, txt = int(m.group(1)), m.group(2), re.sub(r'<[^>]+>', '', m.group(3)).strip()
         cls = "toc-h2" if lv == 2 else "toc-h3"
-        entries.append(f'<a href="#{aid}" class="{cls}" data-target="{aid}">{txt}</a>')
+        badge = ""
+        if lv == 2:
+            sev_match = re.search(r'(p0|p1|p2)', aid.lower())
+            if sev_match:
+                sev = sev_match.group(1)
+                count = len(re.findall(
+                    rf'class="finding-card {sev}"', body
+                ))
+                if count > 0:
+                    badge = f'<span class="toc-badge {sev}">{count}</span>'
+                    severity_sections[sev] = count
+        entries.append(f'<a href="#{aid}" class="{cls}" data-target="{aid}">{txt}{badge}</a>')
     if not entries: return ""
     return '<nav class="toc" role="navigation" aria-label="目录"><div class="toc-title">目录</div>' + "\n".join(entries) + "</nav>"
 
@@ -168,9 +180,15 @@ def _wrap_design_limitations(body):
         )
     return pattern.sub(replace_section, body)
 
+def _calculate_health_score(p0, p1, p2):
+    score = max(0, 100 - p0 * 15 - p1 * 5 - p2 * 2)
+    if p0 > 0 or score < 70: grade = "warning" if score >= 40 else "critical"
+    elif score >= 70: grade = "good"
+    else: grade = "warning"
+    return score, grade
+
 def _postprocess_audit(body):
-    """Post-process rendered HTML: add summary dashboard, wrap findings in cards."""
-    # Count findings
+    """Post-process rendered HTML: health dashboard, structured finding cards, filter bar."""
     p0_ids = set(re.findall(r'id="p0-(\d+)[^"]*"', body))
     p1_ids = set(re.findall(r'id="p1-(\d+)[^"]*"', body))
     p2_ids = set(re.findall(r'id="p2-(\d+)[^"]*"', body))
@@ -179,19 +197,57 @@ def _postprocess_audit(body):
     p2_count = len(p2_ids)
     if p2_count == 0:
         p2_count = len(set(re.findall(r'(P2[-\u2011]\d+)', body)))
+    total = p0_count + p1_count + p2_count
+    score, grade = _calculate_health_score(p0_count, p1_count, p2_count)
 
-    summary = (
-        '<div class="audit-summary">'
-        '<div class="summary-card p0"><div class="count">' + str(p0_count) + '</div>'
-        '<div class="label">P0 \u5173\u952e\u95ee\u9898</div>'
-        '<div class="desc">\u53ef\u80fd\u6539\u53d8\u6838\u5fc3\u7ed3\u8bba</div></div>'
-        '<div class="summary-card p1"><div class="count">' + str(p1_count) + '</div>'
-        '<div class="label">P1 \u5fc5\u67e5\u9879\u76ee</div>'
-        '<div class="desc">\u6295\u7a3f\u524d\u5fc5\u987b\u6838\u67e5</div></div>'
-        '<div class="summary-card p2"><div class="count">' + str(p2_count) + '</div>'
-        '<div class="label">P2 \u6539\u8fdb\u5efa\u8bae</div>'
-        '<div class="desc">\u900f\u660e\u5ea6\u4e0e\u8868\u8ff0\u4f18\u5316</div></div>'
+    if total > 0:
+        p0_pct = p0_count / total * 100
+        p1_pct = p1_count / total * 100
+        p2_pct = p2_count / total * 100
+    else:
+        p0_pct = p1_pct = p2_pct = 0
+    severity_bar = (
+        '<div class="severity-bar">'
+        f'<div class="severity-seg p0" style="width:{p0_pct:.1f}%"></div>'
+        f'<div class="severity-seg p1" style="width:{p1_pct:.1f}%"></div>'
+        f'<div class="severity-seg p2" style="width:{p2_pct:.1f}%"></div>'
         '</div>'
+    )
+
+    ring_deg = score * 3.6
+    dashboard = (
+        '<div class="health-dashboard">'
+        '<div class="health-ring-wrap">'
+        f'<div class="health-ring {grade}" style="--ring-deg:{ring_deg:.1f}deg">'
+        '<div class="health-ring-inner">'
+        f'<div class="health-score">{score}</div>'
+        '<div class="health-label">\u5065\u5eb7\u8bc4\u5206</div>'
+        '</div></div></div>'
+        '<div class="health-details">'
+        '<div class="severity-bar-row">'
+        f'<span class="severity-legend p0">P0 \u00d7 {p0_count}</span>'
+        f'<span class="severity-legend p1">P1 \u00d7 {p1_count}</span>'
+        f'<span class="severity-legend p2">P2 \u00d7 {p2_count}</span>'
+        '</div>'
+        + severity_bar +
+        '<div class="summary-cards-row">'
+        f'<div class="summary-card p0"><div class="count">{p0_count}</div><div class="label">\u5371\u9669</div></div>'
+        f'<div class="summary-card p1"><div class="count">{p1_count}</div><div class="label">\u8b66\u544a</div></div>'
+        f'<div class="summary-card p2"><div class="count">{p2_count}</div><div class="label">\u5efa\u8bae</div></div>'
+        f'<div class="summary-card total"><div class="count">{total}</div><div class="label">\u603b\u8ba1</div></div>'
+        '</div></div></div>'
+    )
+
+    filter_bar = (
+        '<div class="filter-bar" id="filter-bar">'
+        f'<button class="filter-btn active" data-filter="all">\u5168\u90e8 {total}</button>'
+        f'<button class="filter-btn" data-filter="p0">P0 \u00d7 {p0_count}</button>'
+        f'<button class="filter-btn" data-filter="p1">P1 \u00d7 {p1_count}</button>'
+        f'<button class="filter-btn" data-filter="p2">P2 \u00d7 {p2_count}</button>'
+        '<div class="progress-wrap">'
+        f'<span class="progress-label" id="progress-label">0/{total} \u5df2\u4fee\u590d</span>'
+        '<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>'
+        '</div></div>'
     )
 
     def wrap_finding(m):
@@ -201,7 +257,7 @@ def _postprocess_audit(body):
         rest = m.group(4)
         severity = "p0" if "p0" in h_attrs.lower() else ("p1" if "p1" in h_attrs.lower() else "p2")
         sev_label = severity.upper()
-        id_match = re.search(r'(P[02][-\u2011]\d+)', h_text)
+        id_match = re.search(r'(P[012][-\u2011]\d+)', h_text)
         finding_id = id_match.group(1) if id_match else ""
         ev = ""
         if "\u53ef\u76f4\u63a5\u786e\u8ba4" in rest or "CONFIRMED" in rest:
@@ -212,17 +268,27 @@ def _postprocess_audit(body):
             ev = '<span class="evidence-pill review">\u25cf \u5fc5\u987c\u590d\u6838</span>'
         elif "\u8868\u8ff0\u6539\u8fdb" in rest or "WORDING" in rest:
             ev = '<span class="evidence-pill wording">\u25cf \u8868\u8ff0\u6539\u8fdb</span>'
+        resolve_id = finding_id.replace("\u2011", "-") if finding_id else f"{severity}-{id(wrap_finding)}"
         return (
-            '<div class="finding-card">'
+            f'<div class="finding-card {severity}" data-severity="{severity}">'
             '<div class="finding-card-header">'
-            '<span class="severity-pill ' + severity + '">' + sev_label + '</span>'
-            '<span class="finding-id">' + finding_id + '</span>'
+            f'<span class="severity-pill {severity}">{sev_label}</span>'
+            f'<span class="finding-id">{finding_id}</span>'
             + ev +
+            '<label class="resolve-check">'
+            f'<input type="checkbox" class="resolve-checkbox" data-id="{resolve_id}">'
+            '<span class="resolve-mark">\u2713</span>'
+            '<span class="resolve-text">\u5df2\u4fee\u590d</span>'
+            '</label>'
             '</div>'
             '<div class="finding-card-body">'
-            '<h3 ' + h_attrs + '>' + h_text + '</h3>'
+            '<details class="finding-details" open>'
+            '<summary class="finding-summary">'
+            f'<h3 {h_attrs}>{h_text}</h3>'
+            '</summary>'
+            '<div class="finding-content">'
             + rest.strip() +
-            '</div></div>'
+            '</div></details></div></div>'
         )
 
     pattern = re.compile(
@@ -231,9 +297,7 @@ def _postprocess_audit(body):
     )
     body = pattern.sub(wrap_finding, body)
 
-    # Insert summary at the beginning of body content
-    body = summary + chr(10) + body
-
+    body = dashboard + filter_bar + chr(10) + body
     return body
 
 def build_document(body, title):
@@ -250,47 +314,30 @@ def build_document(body, title):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{safe_title}</title>
 <style>
-/* === AUDIT REPORT — warm editorial design ===
-   Inspired by html-anything data-report template.
-   Palette: warm paper (#fafaf7) + terracotta accent (#c96442)
-   Typography: system stack with Noto Sans SC, tabular numbers
-   Shape: 14px radius cards, consistency locked
-*/
+/* === AUDIT REPORT v2 — dashboard-first redesign === */
 
 *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
 :root {{
-  /* Warm paper palette — NOT cold gray */
   --bg: #fafaf7; --bg-card: #ffffff; --bg-muted: #f4f1ec;
   --text: #15140f; --text-secondary: #5a564e; --text-muted: #8a8478;
   --border: #e7e5e0; --border-light: #f0ece5;
-
-  /* Single accent — warm terracotta, saturation ~65% */
   --accent: #c96442; --accent-subtle: #fdf6f3; --accent-hover: #b05538;
   --accent-faint: #faf5f2;
-
-  /* Severity — warm family, desaturated */
-  --p0: #9c2a25; --p0-bg: #fdf5f5; --p0-border: #e8c4c4;
-  --p1: #9a6b20; --p1-bg: #fdf8ef; --p1-border: #e8d8b4;
-  --p2: #2348b8; --p2-bg: #f0f3fa; --p2-border: #c4d0e8;
-
-  /* Evidence */
-  --confirmed: #9c2a25; --likely: #b05538; --review: #9a6b20; --wording: #71717a;
-
-  /* Shape — 14px for cards, 6px for inline (consistency locked) */
+  --p0: #b91c1c; --p0-bg: #fef2f2; --p0-border: #fecaca; --p0-glow: rgba(185,28,28,0.08);
+  --p1: #b45309; --p1-bg: #fffbeb; --p1-border: #fde68a; --p1-glow: rgba(180,83,9,0.06);
+  --p2: #1d4ed8; --p2-bg: #eff6ff; --p2-border: #bfdbfe; --p2-glow: rgba(29,78,216,0.06);
+  --confirmed: #b91c1c; --likely: #c2410c; --review: #b45309; --wording: #71717a;
   --radius: 14px; --radius-sm: 6px;
-
-  /* Shadows — tinted to warm paper */
   --shadow-sm: 0 1px 0 #f0ece5, 0 2px 8px rgba(21,20,15,0.04);
   --shadow-md: 0 4px 12px rgba(21,20,15,0.06), 0 1px 0 #f0ece5;
-
-  /* Content width */
-  --content-max: 68ch; --toc-width: 232px;
-
-  /* Typography */
+  --content-max: 68ch; --toc-width: 260px;
   --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+  --good: #16a34a; --good-bg: #f0fdf4;
+  --warning: #ca8a04; --warning-bg: #fefce8;
+  --critical: #dc2626; --critical-bg: #fef2f2;
 }}
 
 @media (prefers-color-scheme: dark) {{
@@ -300,12 +347,15 @@ def build_document(body, title):
     --border: #3a3632; --border-light: #2e2b28;
     --accent: #e07a56; --accent-subtle: #2a1e18; --accent-hover: #f09070;
     --accent-faint: #241a15;
-    --p0: #d98080; --p0-bg: #2a1616; --p0-border: #4a2020;
-    --p1: #d4a858; --p1-bg: #2a2210; --p1-border: #4a3818;
-    --p2: #7da4e0; --p2-bg: #161e2a; --p2-border: #203050;
-    --confirmed: #d98080; --likely: #e09070; --review: #d4a858; --wording: #71717a;
+    --p0: #f87171; --p0-bg: #2a1616; --p0-border: #4a2020; --p0-glow: rgba(248,113,113,0.08);
+    --p1: #fbbf24; --p1-bg: #2a2210; --p1-border: #4a3818; --p1-glow: rgba(251,191,36,0.06);
+    --p2: #60a5fa; --p2-bg: #161e2a; --p2-border: #203050; --p2-glow: rgba(96,165,250,0.06);
+    --confirmed: #f87171; --likely: #fb923c; --review: #fbbf24; --wording: #71717a;
     --shadow-sm: 0 1px 0 rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+    --good: #4ade80; --good-bg: #142018;
+    --warning: #facc15; --warning-bg: #2a2210;
+    --critical: #f87171; --critical-bg: #2a1616;
   }}
 }}
 
@@ -332,9 +382,7 @@ body {{
 .skip-link:focus {{ top: 16px; }}
 
 /* === Focus === */
-:focus-visible {{
-  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
-}}
+:focus-visible {{ outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }}
 a:focus-visible {{ box-shadow: 0 0 0 3px rgba(201,100,66,0.15); }}
 
 /* === Layout === */
@@ -355,22 +403,33 @@ a:focus-visible {{ box-shadow: 0 0 0 3px rgba(201,100,66,0.15); }}
   padding: 0 10px 14px; border-bottom: 1px solid var(--border-light); margin-bottom: 6px;
 }}
 .toc a {{
-  display: block; padding: 6px 10px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: var(--radius-sm);
   color: var(--text-secondary); text-decoration: none;
   font-size: 13px; line-height: 1.5; min-height: 34px;
   transition: background 0.15s, color 0.15s;
+  word-break: break-word; overflow-wrap: break-word;
 }}
 .toc a:hover {{ background: var(--bg-muted); color: var(--text); }}
 .toc a.toc-h2 {{ font-weight: 600; color: var(--text); }}
-.toc a.toc-h3 {{ padding-left: 22px; font-weight: 400; position: relative; }}
+.toc a.toc-h3 {{ padding-left: 22px; font-weight: 400; position: relative; font-size: 12.5px; }}
 .toc a.toc-h3::before {{
   content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
   width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted);
 }}
-.toc a.active {{
-  background: var(--accent-subtle); color: var(--accent); font-weight: 600;
-}}
+.toc a.active {{ background: var(--accent-subtle); color: var(--accent); font-weight: 600; }}
 .toc a.active.toc-h3::before {{ background: var(--accent); }}
+
+/* TOC count badges */
+.toc-badge {{
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 18px; padding: 0 5px;
+  border-radius: 9px; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.02em; margin-left: auto; flex-shrink: 0;
+}}
+.toc-badge.p0 {{ background: var(--p0-bg); color: var(--p0); }}
+.toc-badge.p1 {{ background: var(--p1-bg); color: var(--p1); }}
+.toc-badge.p2 {{ background: var(--p2-bg); color: var(--p2); }}
 
 /* === Main === */
 .main-content {{
@@ -380,7 +439,7 @@ a:focus-visible {{ box-shadow: 0 0 0 3px rgba(201,100,66,0.15); }}
 
 /* === Title Banner === */
 .title-banner {{
-  margin-bottom: 40px; padding-bottom: 24px;
+  margin-bottom: 32px; padding-bottom: 20px;
   border-bottom: 1px solid var(--border);
 }}
 .title-banner h1 {{
@@ -399,19 +458,139 @@ a:focus-visible {{ box-shadow: 0 0 0 3px rgba(201,100,66,0.15); }}
 .status-approved {{ background: #f0f8f0; color: #1f7a3a; }}
 .status-designing {{ background: var(--p2-bg); color: var(--p2); }}
 .status-rejected {{ background: var(--p0-bg); color: var(--p0); }}
-@media (prefers-color-scheme: dark) {{
-  .status-approved {{ background: #142018; color: #6ab06a; }}
+@media (prefers-color-scheme: dark) {{ .status-approved {{ background: #142018; color: #6ab06a; }} }}
+
+/* === Health Dashboard === */
+.health-dashboard {{
+  display: flex; gap: 28px; align-items: center;
+  margin: 0 0 28px; padding: 24px 28px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}}
+.health-ring-wrap {{ flex-shrink: 0; }}
+.health-ring {{
+  width: 120px; height: 120px; border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-color, var(--good)) var(--ring-deg, 0deg),
+    var(--border) var(--ring-deg, 0deg)
+  );
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}}
+.health-ring::before {{
+  content: ''; position: absolute; inset: 6px;
+  border-radius: 50%; background: var(--bg-card);
+}}
+.health-ring.good {{ --ring-color: var(--good); }}
+.health-ring.warning {{ --ring-color: var(--warning); }}
+.health-ring.critical {{ --ring-color: var(--critical); }}
+.health-ring-inner {{
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  width: 96px; height: 96px; justify-content: center;
+}}
+.health-score {{
+  font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
+  line-height: 1; color: var(--text);
+}}
+.health-ring.critical .health-score {{ color: var(--critical); }}
+.health-ring.warning .health-score {{ color: var(--warning); }}
+.health-ring.good .health-score {{ color: var(--good); }}
+.health-label {{
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-muted); margin-top: 4px;
+}}
+
+.health-details {{ flex: 1; min-width: 0; }}
+.severity-bar-row {{
+  display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap;
+}}
+.severity-legend {{
+  font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px;
+}}
+.severity-legend.p0 {{ color: var(--p0); }}
+.severity-legend.p1 {{ color: var(--p1); }}
+.severity-legend.p2 {{ color: var(--p2); }}
+.severity-legend::before {{
+  content: ''; display: inline-block; width: 8px; height: 8px;
+  border-radius: 2px;
+}}
+.severity-legend.p0::before {{ background: var(--p0); }}
+.severity-legend.p1::before {{ background: var(--p1); }}
+.severity-legend.p2::before {{ background: var(--p2); }}
+
+.severity-bar {{
+  display: flex; height: 8px; border-radius: 4px;
+  overflow: hidden; background: var(--bg-muted); margin-bottom: 16px;
+}}
+.severity-seg {{ min-width: 2px; transition: width 0.4s ease; }}
+.severity-seg.p0 {{ background: var(--p0); }}
+.severity-seg.p1 {{ background: var(--p1); }}
+.severity-seg.p2 {{ background: var(--p2); }}
+
+.summary-cards-row {{
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}}
+.summary-card {{
+  background: var(--bg-muted); border-radius: 10px;
+  padding: 12px 16px; text-align: center;
+}}
+.summary-card .count {{
+  font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+}}
+.summary-card.p0 .count {{ color: var(--p0); }}
+.summary-card.p1 .count {{ color: var(--p1); }}
+.summary-card.p2 .count {{ color: var(--p2); }}
+.summary-card.total .count {{ color: var(--text); }}
+.summary-card .label {{
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted); margin-top: 4px;
+}}
+
+/* === Filter Bar === */
+.filter-bar {{
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 24px; padding: 10px 16px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  position: sticky; top: 0; z-index: 50;
+}}
+.filter-btn {{
+  padding: 5px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg-muted);
+  color: var(--text-secondary); cursor: pointer;
+  transition: all 0.15s;
+}}
+.filter-btn:hover {{ background: var(--bg-card); border-color: var(--text-muted); }}
+.filter-btn.active {{ background: var(--text); color: var(--bg-card); border-color: var(--text); }}
+
+.progress-wrap {{
+  margin-left: auto; display: flex; align-items: center; gap: 10px;
+}}
+.progress-label {{
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  white-space: nowrap;
+}}
+.progress-bar {{
+  width: 100px; height: 6px; border-radius: 3px;
+  background: var(--bg-muted); overflow: hidden;
+}}
+.progress-fill {{
+  height: 100%; width: 0; border-radius: 3px;
+  background: var(--good); transition: width 0.3s ease;
 }}
 
 /* === Typography === */
 h2 {{
   font-size: 18px; font-weight: 700; margin-top: 48px; margin-bottom: 14px;
   padding-bottom: 10px; border-bottom: 1px solid var(--border-light);
-  letter-spacing: -0.01em; scroll-margin-top: 20px; color: var(--text);
+  letter-spacing: -0.01em; scroll-margin-top: 80px; color: var(--text);
 }}
 h3 {{
-  font-size: 15px; font-weight: 650; margin-top: 32px; margin-bottom: 10px;
-  color: var(--text); scroll-margin-top: 20px;
+  font-size: 15px; font-weight: 650; margin-top: 0; margin-bottom: 10px;
+  color: var(--text); scroll-margin-top: 80px; display: inline;
 }}
 h4 {{
   font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
@@ -429,7 +608,7 @@ ul, ol {{ margin: 8px 0 16px 0; padding-left: 22px; max-width: var(--content-max
 li {{ margin-bottom: 5px; line-height: 1.75; }}
 li::marker {{ color: var(--text-muted); }}
 
-/* === Tables — warm editorial, uppercase headers === */
+/* === Tables === */
 .table-wrap {{
   margin: 20px 0 28px; overflow-x: auto; border-radius: var(--radius);
   border: 1px solid var(--border); box-shadow: var(--shadow-sm);
@@ -447,13 +626,12 @@ td {{
   padding: 10px 14px; border-bottom: 1px solid var(--border-light);
   vertical-align: top; color: var(--text);
 }}
+td.num-cell {{ font-family: var(--font-mono); font-size: 13px; text-align: right; font-feature-settings: 'tnum' on; }}
 tbody tr:last-child td {{ border-bottom: none; }}
 tbody tr {{ transition: background 0.15s; }}
 tbody tr:hover {{ background: var(--bg-muted); }}
 tbody tr:nth-child(even) {{ background: rgba(244,241,236,0.4); }}
-@media (prefers-color-scheme: dark) {{
-  tbody tr:nth-child(even) {{ background: rgba(42,40,38,0.4); }}
-}}
+@media (prefers-color-scheme: dark) {{ tbody tr:nth-child(even) {{ background: rgba(42,40,38,0.4); }} }}
 
 /* === Blockquotes === */
 blockquote {{
@@ -469,7 +647,7 @@ blockquote p:last-child {{ margin-bottom: 0; }}
 code {{
   font-family: var(--font-mono); font-size: 0.875em;
   background: var(--bg-muted); border-radius: 3px;
-  padding: 0.1em 0.35em; color: var(--p0);
+  padding: 0.1em 0.35em; color: var(--text-secondary);
 }}
 pre {{
   background: var(--bg-muted); border-radius: var(--radius-sm);
@@ -522,42 +700,103 @@ pre code {{ background: transparent; padding: 0; color: var(--text); font-size: 
 
 hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
 
-/* === Responsive === */
-@media (max-width: 1080px) {{
-  .toc {{
-    position: fixed; left: -100%; top: 0; width: 280px; height: 100vh;
-    z-index: 200; transition: left 0.3s;
-  }}
-  .toc.open {{ left: 0; box-shadow: 4px 0 20px rgba(21,20,15,0.1); }}
-  .toc-toggle {{ display: flex; }}
-  .toc-overlay {{ display: none; position: fixed; inset: 0; background: rgba(21,20,15,0.15); z-index: 199; }}
-  .toc-overlay.open {{ display: block; }}
-  .main-content {{ max-width: 100%; padding: 32px 24px 100px; }}
+/* === Finding Cards v2 — left border + collapse + resolve === */
+.finding-card {{
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0;
+  margin: 16px 0 20px; overflow: hidden;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease, box-shadow 0.2s ease;
 }}
-@media (max-width: 640px) {{
-  body {{ font-size: 15px; }}
-  .main-content {{ padding: 24px 16px 80px; }}
-  h2 {{ font-size: 16px; margin-top: 36px; }}
-  h3 {{ font-size: 14px; }}
-  .table-wrap {{ font-size: 12.5px; }}
-  th, td {{ padding: 7px 10px; }}
-  .title-banner h1 {{ font-size: 22px; }}
-  .back-to-top, .toc-toggle {{ bottom: 16px; width: 36px; height: 36px; font-size: 16px; }}
-  .toc-toggle {{ left: 16px; }} .back-to-top {{ right: 16px; }}
+.finding-card.visible {{ opacity: 1; transform: translateY(0); }}
+.finding-card.p0 {{ border-left: 4px solid var(--p0); box-shadow: var(--shadow-sm), 0 0 0 0 var(--p0-glow); }}
+.finding-card.p1 {{ border-left: 4px solid var(--p1); box-shadow: var(--shadow-sm); }}
+.finding-card.p2 {{ border-left: 4px solid var(--p2); box-shadow: var(--shadow-sm); }}
+.finding-card.p0:hover {{ box-shadow: var(--shadow-md), 0 0 20px var(--p0-glow); }}
+.finding-card.resolved {{
+  opacity: 0.55; border-left-color: var(--text-muted);
 }}
+.finding-card.resolved .finding-card-header {{ background: var(--bg-muted); }}
 
-/* === Print === */
-@media print {{
-  .toc, .toc-toggle, .back-to-top, .skip-link {{ display: none !important; }}
-  .main-content {{ max-width: 100%; padding: 0; }}
-  body {{ background: white; color: black; font-size: 10.5pt; line-height: 1.6; }}
-  .table-wrap {{ box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }}
-  h2 {{ page-break-after: avoid; margin-top: 24pt; }}
-  .title-banner {{ border-bottom: 1.5pt solid #333; }}
+.finding-card-header {{
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+  background: var(--bg-muted);
 }}
 
+.finding-card-body {{ padding: 0; }}
 
-/* === Design Limitations (collapsed, de-emphasized) === */
+/* Finding details/summary for collapse */
+.finding-details {{ border: none; }}
+.finding-details > summary {{
+  padding: 16px 20px 12px; cursor: pointer;
+  list-style: none; display: flex; align-items: baseline;
+}}
+.finding-details > summary::-webkit-details-marker {{ display: none; }}
+.finding-details > summary::after {{
+  content: '收起'; font-size: 11px; font-weight: 600; color: var(--text-muted);
+  margin-left: auto; flex-shrink: 0; letter-spacing: 0.04em;
+  transition: content 0.15s;
+}}
+.finding-details:not([open]) > summary::after {{ content: '展开详情'; }}
+.finding-details > summary:hover::after {{ color: var(--accent); }}
+
+.finding-content {{ padding: 0 20px 18px; }}
+
+/* Severity Pill */
+.severity-pill {{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+}}
+.severity-pill.p0 {{ background: var(--p0-bg); color: var(--p0); }}
+.severity-pill.p1 {{ background: var(--p1-bg); color: var(--p1); }}
+.severity-pill.p2 {{ background: var(--p2-bg); color: var(--p2); }}
+
+/* Evidence Status Pill */
+.evidence-pill {{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  background: var(--bg-muted); border: 1px solid var(--border-light);
+}}
+.evidence-pill.confirmed {{ color: var(--confirmed); border-color: var(--confirmed); background: rgba(185,28,28,0.06); }}
+.evidence-pill.likely {{ color: var(--likely); border-color: var(--likely); background: rgba(194,65,12,0.06); }}
+.evidence-pill.review {{ color: var(--review); border-color: var(--review); background: rgba(180,83,9,0.06); }}
+.evidence-pill.wording {{ color: var(--wording); border-color: var(--border); }}
+@media (prefers-color-scheme: dark) {{
+  .evidence-pill.confirmed {{ background: rgba(248,113,113,0.1); }}
+  .evidence-pill.likely {{ background: rgba(251,146,60,0.1); }}
+  .evidence-pill.review {{ background: rgba(251,191,36,0.1); }}
+}}
+
+/* Finding ID */
+.finding-id {{
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  color: var(--text-muted); letter-spacing: 0.02em;
+}}
+
+/* Resolve checkbox */
+.resolve-check {{
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: auto; cursor: pointer;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  transition: color 0.15s;
+}}
+.resolve-check:hover {{ color: var(--good); }}
+.resolve-checkbox {{ display: none; }}
+.resolve-mark {{
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 3px;
+  border: 1.5px solid var(--border); font-size: 10px;
+  transition: all 0.15s;
+}}
+.resolve-checkbox:checked + .resolve-mark {{
+  background: var(--good); border-color: var(--good); color: #fff;
+}}
+.resolve-text {{ letter-spacing: 0.02em; }}
+
+/* === Design Limitations (collapsed) === */
 .design-limitations {{
   background: var(--bg-muted); border: 1px solid var(--border-light);
   border-radius: var(--radius); padding: 0; margin: 32px 0;
@@ -580,100 +819,8 @@ hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
 .design-limitations .limitation-body p {{ font-size: 14px; color: var(--text-secondary); }}
 .design-limitations .limitation-body strong {{ color: var(--text); }}
 
-/* === Scrollbar === */
-.toc::-webkit-scrollbar {{ width: 3px; }}
-.toc::-webkit-scrollbar-track {{ background: transparent; }}
-.toc::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 3px; }}
-
-/* === Audit Summary Dashboard === */
-.audit-summary {{
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
-  margin: 0 0 40px; padding: 0;
-}}
-.summary-card {{
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px 22px;
-  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
-}}
-.summary-card::before {{
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-}}
-.summary-card.p0::before {{ background: var(--p0); }}
-.summary-card.p1::before {{ background: var(--p1); }}
-.summary-card.p2::before {{ background: var(--p2); }}
-.summary-card .count {{
-  font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
-  line-height: 1; margin-bottom: 6px;
-}}
-.summary-card.p0 .count {{ color: var(--p0); }}
-.summary-card.p1 .count {{ color: var(--p1); }}
-.summary-card.p2 .count {{ color: var(--p2); }}
-.summary-card .label {{
-  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--text-muted);
-}}
-.summary-card .desc {{
-  font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5;
-}}
-
-/* === Finding Cards === */
-.finding-card {{
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 0;
-  margin: 20px 0 24px; box-shadow: var(--shadow-sm);
-  overflow: hidden; opacity: 0; transform: translateY(16px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}}
-.finding-card.visible {{ opacity: 1; transform: translateY(0); }}
-.finding-card-header {{
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 14px 20px; border-bottom: 1px solid var(--border-light);
-  background: var(--bg-muted);
-}}
-.finding-card-body {{
-  padding: 18px 20px;
-}}
-.finding-card-body > p:last-child {{ margin-bottom: 0; }}
-
-/* Severity Pill */
-.severity-pill {{
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 10px; border-radius: 100px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
-}}
-.severity-pill.p0 {{ background: var(--p0-bg); color: var(--p0); }}
-.severity-pill.p1 {{ background: var(--p1-bg); color: var(--p1); }}
-.severity-pill.p2 {{ background: var(--p2-bg); color: var(--p2); }}
-
-/* Evidence Status Pill */
-.evidence-pill {{
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 10px; border-radius: 100px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
-  background: var(--bg-muted); border: 1px solid var(--border-light);
-}}
-.evidence-pill.confirmed {{ color: var(--confirmed); border-color: var(--confirmed); background: rgba(156,42,37,0.06); }}
-.evidence-pill.likely {{ color: var(--likely); border-color: var(--likely); background: rgba(176,85,56,0.06); }}
-.evidence-pill.review {{ color: var(--review); border-color: var(--review); background: rgba(154,107,32,0.06); }}
-.evidence-pill.wording {{ color: var(--wording); border-color: var(--border); }}
-
-@media (prefers-color-scheme: dark) {{
-  .evidence-pill.confirmed {{ background: rgba(217,128,128,0.1); }}
-  .evidence-pill.likely {{ background: rgba(224,144,112,0.1); }}
-  .evidence-pill.review {{ background: rgba(212,168,88,0.1); }}
-}}
-
-/* Finding ID */
-.finding-id {{
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-  color: var(--text-muted); letter-spacing: 0.02em;
-}}
-
 /* === Scroll Animations === */
-@keyframes fadeInUp {{
-  from {{ opacity: 0; transform: translateY(20px); }}
-  to {{ opacity: 1; transform: translateY(0); }}
-}}
+@keyframes fadeInUp {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
 .animate-in {{
   opacity: 0; transform: translateY(20px);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -692,12 +839,50 @@ hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
 }}
 .evidence-highlight strong {{ color: var(--text); }}
 
-/* === Responsive for summary === */
+/* === Scrollbar === */
+.toc::-webkit-scrollbar {{ width: 3px; }}
+.toc::-webkit-scrollbar-track {{ background: transparent; }}
+.toc::-webkit-scrollbar-thumb {{ background: var(--border); border-radius: 3px; }}
+
+/* === Responsive === */
+@media (max-width: 1080px) {{
+  .toc {{
+    position: fixed; left: -100%; top: 0; width: 280px; height: 100vh;
+    z-index: 200; transition: left 0.3s;
+  }}
+  .toc.open {{ left: 0; box-shadow: 4px 0 20px rgba(21,20,15,0.1); }}
+  .toc-toggle {{ display: flex; }}
+  .toc-overlay {{ display: none; position: fixed; inset: 0; background: rgba(21,20,15,0.15); z-index: 199; }}
+  .toc-overlay.open {{ display: block; }}
+  .main-content {{ max-width: 100%; padding: 32px 24px 100px; }}
+}}
 @media (max-width: 640px) {{
-  .audit-summary {{ grid-template-columns: 1fr; gap: 10px; }}
-  .summary-card .count {{ font-size: 28px; }}
-  .finding-card-header {{ padding: 10px 14px; }}
-  .finding-card-body {{ padding: 14px; }}
+  body {{ font-size: 15px; }}
+  .main-content {{ padding: 24px 16px 80px; }}
+  h2 {{ font-size: 16px; margin-top: 36px; }}
+  .title-banner h1 {{ font-size: 22px; }}
+  .back-to-top, .toc-toggle {{ bottom: 16px; width: 36px; height: 36px; font-size: 16px; }}
+  .toc-toggle {{ left: 16px; }} .back-to-top {{ right: 16px; }}
+  .health-dashboard {{ flex-direction: column; gap: 16px; padding: 20px; }}
+  .summary-cards-row {{ grid-template-columns: repeat(2, 1fr); }}
+  .filter-bar {{ flex-wrap: wrap; }}
+  .progress-wrap {{ width: 100%; margin-left: 0; }}
+}}
+
+/* === Print === */
+@media print {{
+  .toc, .toc-toggle, .back-to-top, .skip-link, .filter-bar {{ display: none !important; }}
+  .main-content {{ max-width: 100%; padding: 0; }}
+  body {{ background: white; color: black; font-size: 10.5pt; line-height: 1.6; }}
+  .table-wrap {{ box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }}
+  h2 {{ page-break-after: avoid; margin-top: 24pt; }}
+  .title-banner {{ border-bottom: 1.5pt solid #333; }}
+  .finding-card {{ opacity: 1 !important; transform: none !important; }}
+  .finding-card.p0 {{ border-left: 3pt solid #b91c1c; }}
+  .finding-card.p1 {{ border-left: 3pt solid #b45309; }}
+  .finding-card.p2 {{ border-left: 3pt solid #1d4ed8; }}
+  .health-dashboard {{ border: 1pt solid #ccc; }}
+  .resolve-check {{ display: none; }}
 }}
 </style>
 </head>
@@ -725,7 +910,7 @@ hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
     if (el) headings.push({{ el: el, link: l }});
   }});
   function updateActive() {{
-    var y = window.scrollY + 80, cur = null;
+    var y = window.scrollY + 100, cur = null;
     for (var i = 0; i < headings.length; i++) {{ if (headings[i].el.offsetTop <= y) cur = headings[i]; }}
     tocLinks.forEach(function(l) {{ l.classList.remove('active'); }});
     if (cur) cur.link.classList.add('active');
@@ -741,7 +926,7 @@ hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
   tocOverlay.addEventListener('click', closeToc);
   tocLinks.forEach(function(l) {{ l.addEventListener('click', closeToc); }});
 
-  // Scroll-triggered fade-in for finding cards and animate-in elements
+  // Scroll-triggered fade-in
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{
     var observer = new IntersectionObserver(function(entries) {{
       entries.forEach(function(entry) {{
@@ -759,6 +944,59 @@ hr {{ border: none; border-top: 1px solid var(--border); margin: 36px 0; }}
       el.classList.add('visible');
     }});
   }}
+
+  // === Filter bar ===
+  var filterBtns = document.querySelectorAll('.filter-btn');
+  var cards = document.querySelectorAll('.finding-card');
+  var h2s = document.querySelectorAll('h2');
+  filterBtns.forEach(function(btn) {{
+    btn.addEventListener('click', function() {{
+      filterBtns.forEach(function(b) {{ b.classList.remove('active'); }});
+      btn.classList.add('active');
+      var filter = btn.getAttribute('data-filter');
+      cards.forEach(function(card) {{
+        if (filter === 'all') {{
+          card.style.display = '';
+        }} else {{
+          card.style.display = card.getAttribute('data-severity') === filter ? '' : 'none';
+        }}
+      }});
+    }});
+  }});
+
+  // === Resolve tracking (localStorage) ===
+  var STORAGE_KEY = 'ob-audit-resolved-' + location.pathname;
+  var resolved = {{}};
+  try {{ resolved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{{}}'); }} catch(e) {{}}
+  var totalCards = cards.length;
+  var progressFill = document.getElementById('progress-fill');
+  var progressLabel = document.getElementById('progress-label');
+
+  function updateProgress() {{
+    var count = Object.keys(resolved).length;
+    if (progressFill) progressFill.style.width = (totalCards > 0 ? (count / totalCards * 100) : 0) + '%';
+    if (progressLabel) progressLabel.textContent = count + '/' + totalCards + ' 已修复';
+  }}
+
+  document.querySelectorAll('.resolve-checkbox').forEach(function(cb) {{
+    var id = cb.getAttribute('data-id');
+    if (resolved[id]) {{
+      cb.checked = true;
+      cb.closest('.finding-card').classList.add('resolved');
+    }}
+    cb.addEventListener('change', function() {{
+      if (cb.checked) {{
+        resolved[id] = true;
+        cb.closest('.finding-card').classList.add('resolved');
+      }} else {{
+        delete resolved[id];
+        cb.closest('.finding-card').classList.remove('resolved');
+      }}
+      try {{ localStorage.setItem(STORAGE_KEY, JSON.stringify(resolved)); }} catch(e) {{}}
+      updateProgress();
+    }});
+  }});
+  updateProgress();
 }})();
 </script>
 </body>
