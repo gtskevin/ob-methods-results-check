@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `ob-methods-results-audit` portable across Codex, Claude Code, and compatible coding agents without relying on the author's personal `pretty-doc` installation.
+**Goal:** Make `ob-methods-results-check` portable across Codex, Claude Code, and compatible coding agents without relying on the author's personal `pretty-doc` installation.
 
 **Architecture:** Keep semantic audit judgment in `SKILL.md` and focused references. Add two standard-library Python utilities: one reports optional local capabilities as JSON, and one converts the editable Markdown audit report into a standalone HTML reading copy. Treat PDF tooling as optional enhancement, preserve Markdown-only fallback, and add repository-level documentation for public GitHub distribution.
 
@@ -74,8 +74,8 @@ class SkillContractTests(unittest.TestCase):
     def test_public_repository_files_exist(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         license_text = (ROOT / "LICENSE.txt").read_text(encoding="utf-8")
-        self.assertIn("~/.agents/skills/ob-methods-results-audit", readme)
-        self.assertIn("~/.claude/skills/ob-methods-results-audit", readme)
+        self.assertIn("~/.agents/skills/ob-methods-results-check", readme)
+        self.assertIn("~/.claude/skills/ob-methods-results-check", readme)
         self.assertIn("pdftotext", readme)
         self.assertIn("pdftoppm", readme)
         self.assertIn("Markdown-only", readme)
@@ -164,7 +164,7 @@ Update `agents/openai.yaml`:
 interface:
   display_name: "OB Methods Results Audit"
   short_description: "Audit OB manuscript methods and results before submission"
-  default_prompt: "Use $ob-methods-results-audit to audit this manuscript's Methods and Results before submission. Prioritize issues that may change core conclusions, distinguish confirmed inconsistencies from items requiring raw-output review, and deliver an editable Markdown report plus an HTML reading copy when local rendering is available."
+  default_prompt: "Use $ob-methods-results-check to audit this manuscript's Methods and Results before submission. Prioritize issues that may change core conclusions, distinguish confirmed inconsistencies from items requiring raw-output review, and deliver an editable Markdown report plus an HTML reading copy when local rendering is available."
 ```
 
 Update `.gitignore`:
@@ -208,14 +208,14 @@ Copy or symlink this repository folder into your agent's skills directory.
 
 ```bash
 mkdir -p ~/.agents/skills
-ln -s /absolute/path/to/ob-methods-results-audit ~/.agents/skills/ob-methods-results-audit
+ln -s /absolute/path/to/ob-methods-results-check ~/.agents/skills/ob-methods-results-check
 ```
 
 ### Claude Code
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s /absolute/path/to/ob-methods-results-audit ~/.claude/skills/ob-methods-results-audit
+ln -s /absolute/path/to/ob-methods-results-check ~/.claude/skills/ob-methods-results-check
 ```
 
 Restart the agent session if the Skill is not discovered immediately.
@@ -223,10 +223,10 @@ Restart the agent session if the Skill is not discovered immediately.
 ## Use
 
 ```text
-Use $ob-methods-results-audit to check this manuscript before submission.
+Use $ob-methods-results-check to check this manuscript before submission.
 ```
 
-Claude Code users can invoke `/ob-methods-results-audit`.
+Claude Code users can invoke `/ob-methods-results-check`.
 
 ## Dependencies
 
@@ -847,10 +847,10 @@ Expected: 5 tests PASS.
 Run:
 
 ```bash
-python3 skills/ob-methods-results-audit/scripts/render_report.py tests/fixtures/sample-report.md --output /tmp/ob-methods-results-audit-sample.html --overwrite
+python3 skills/ob-methods-results-check/scripts/render_report.py tests/fixtures/sample-report.md --output /tmp/ob-methods-results-check-sample.html --overwrite
 ```
 
-Expected: stdout prints `/tmp/ob-methods-results-audit-sample.html`. Open the file locally and confirm headings, table, blockquote, Unicode, and escaped `<script>` text are readable.
+Expected: stdout prints `/tmp/ob-methods-results-check-sample.html`. Open the file locally and confirm headings, table, blockquote, Unicode, and escaped `<script>` text are readable.
 
 - [ ] **Step 7: Commit the renderer**
 
@@ -992,7 +992,7 @@ jobs:
       - name: Install Agent Skills validator
         run: python -m pip install skills-ref
       - name: Validate Agent Skills package
-        run: agentskills validate skills/ob-methods-results-audit
+        run: agentskills validate skills/ob-methods-results-check
 ```
 
 - [ ] **Step 2: Add contributor verification commands to README**
@@ -1005,7 +1005,7 @@ Append:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-agentskills validate skills/ob-methods-results-audit
+agentskills validate skills/ob-methods-results-check
 ```
 
 GitHub CLI 2.90.0 or later also provides a public-preview publishing check:
@@ -1030,9 +1030,9 @@ Expected: all tests PASS.
 Run in an isolated temporary environment:
 
 ```bash
-python3 -m venv /tmp/ob-methods-results-audit-validate
-/tmp/ob-methods-results-audit-validate/bin/python -m pip install skills-ref
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate skills/ob-methods-results-audit
+python3 -m venv /tmp/ob-methods-results-check-validate
+/tmp/ob-methods-results-check-validate/bin/python -m pip install skills-ref
+/tmp/ob-methods-results-check-validate/bin/agentskills validate skills/ob-methods-results-check
 ```
 
 Expected: validator exits `0` with no Agent Skills specification errors.
@@ -1086,7 +1086,7 @@ Expected: all tests PASS.
 Run:
 
 ```bash
-python3 skills/ob-methods-results-audit/scripts/check_environment.py
+python3 skills/ob-methods-results-check/scripts/check_environment.py
 ```
 
 Expected: valid JSON showing Python plus available or unavailable optional tools.
@@ -1096,7 +1096,7 @@ Expected: valid JSON showing Python plus available or unavailable optional tools
 Run:
 
 ```bash
-python3 skills/ob-methods-results-audit/scripts/render_report.py docs/superpowers/specs/2026-06-01-portable-release-profile-design.md --output /tmp/portable-release-profile-design.html --overwrite --open
+python3 skills/ob-methods-results-check/scripts/render_report.py docs/superpowers/specs/2026-06-01-portable-release-profile-design.md --output /tmp/portable-release-profile-design.html --overwrite --open
 ```
 
 Expected: HTML is generated and readable without invoking `pretty-doc`.
@@ -1106,7 +1106,7 @@ Expected: HTML is generated and readable without invoking `pretty-doc`.
 Run:
 
 ```bash
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate skills/ob-methods-results-audit
+/tmp/ob-methods-results-check-validate/bin/agentskills validate skills/ob-methods-results-check
 ```
 
 Expected: exit `0`.
@@ -1163,12 +1163,12 @@ Report:
 The GitHub CLI publishing preview validates repositories as Skill containers. The installable bundle therefore lives under:
 
 ```text
-skills/ob-methods-results-audit/
+skills/ob-methods-results-check/
 ```
 
 Repository-level documentation, CI, and tests remain at the root. Bundled scripts and references remain inside the Skill directory so an installed release is self-contained. Validate the final publishing layout with:
 
 ```bash
-agentskills validate skills/ob-methods-results-audit
+agentskills validate skills/ob-methods-results-check
 gh skill publish --dry-run
 ```

@@ -4,7 +4,7 @@
 
 ## 1. 目标
 
-将 `ob-methods-results-audit` 从个人 Codex 环境中的可用 Skill，升级为可发布到 GitHub、可供主流 coding agents 使用的便携版本。
+将 `ob-methods-results-check` 从个人 Codex 环境中的可用 Skill，升级为可发布到 GitHub、可供主流 coding agents 使用的便携版本。
 
 目标用户包括使用 Codex、Claude Code 及其他遵循 Agent Skills 工作方式的研究者。用户不应预先安装作者个人环境中的 `pretty-doc`。PDF 工具可用时增强审计质量；缺少工具时，Skill 应明确披露限制并继续完成可行部分。
 
@@ -61,8 +61,8 @@ GitHub 仓库根目录提供面向人的 `README.md`，说明：
 
 | Agent | 个人级安装位置 | 项目级安装位置 |
 |---|---|---|
-| Codex | `$HOME/.agents/skills/ob-methods-results-audit/` | `<repo>/.agents/skills/ob-methods-results-audit/` |
-| Claude Code | `$HOME/.claude/skills/ob-methods-results-audit/` | `<repo>/.claude/skills/ob-methods-results-audit/` |
+| Codex | `$HOME/.agents/skills/ob-methods-results-check/` | `<repo>/.agents/skills/ob-methods-results-check/` |
+| Claude Code | `$HOME/.claude/skills/ob-methods-results-check/` | `<repo>/.claude/skills/ob-methods-results-check/` |
 | 其他兼容 Agent | 按其 Agent Skills 文档安装 | 按其 Agent Skills 文档安装 |
 
 README 同时提示：安装或更新后，如果 Agent 没有立即发现 Skill，应重启会话或按产品文档重新加载。
@@ -70,17 +70,17 @@ README 同时提示：安装或更新后，如果 Agent 没有立即发现 Skill
 公开发布后，优先推荐 GitHub CLI 安装：
 
 ```bash
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+gh skill install gtskevin/ob-methods-results-check ob-methods-results-check --agent codex --scope user
 ```
 
-手工 clone + symlink 保留为兼容路径，symlink 目标指向仓库中的 `skills/ob-methods-results-audit/`。
+手工 clone + symlink 保留为兼容路径，symlink 目标指向仓库中的 `skills/ob-methods-results-check/`。
 
 ### 4.2 首次使用
 
 用户可以直接提出目标，例如：
 
 ```text
-Use $ob-methods-results-audit to check this manuscript before submission.
+Use $ob-methods-results-check to check this manuscript before submission.
 ```
 
 Skill 不要求用户先选择复杂技术模式，而是根据材料自动推断审计深度。若材料不足以回答关键问题，Skill 在报告中列出下一批文件。
@@ -182,12 +182,12 @@ audit-reports/<paper-slug>/
 ## 6. 仓库结构调整
 
 ```text
-ob-methods-results-audit/
+ob-methods-results-check/
 ├── README.md
 ├── LICENSE.txt
 ├── .github/workflows/test.yml
 ├── skills/
-│   └── ob-methods-results-audit/
+│   └── ob-methods-results-check/
 │       ├── LICENSE.txt
 │       ├── SKILL.md
 │       ├── agents/
@@ -204,7 +204,7 @@ ob-methods-results-audit/
 
 说明：
 
-- 仓库根目录是 GitHub CLI 发布容器；`skills/ob-methods-results-audit/` 是可独立安装的 Skill 根目录。
+- 仓库根目录是 GitHub CLI 发布容器；`skills/ob-methods-results-check/` 是可独立安装的 Skill 根目录。
 - 根目录 `README.md` 服务于 GitHub 发布，不应从 `SKILL.md` 引用或默认加载。
 - 根目录和 Skill 目录都保留 `LICENSE.txt`，确保 GitHub 页面和安装包都能看到许可证。
 - `SKILL.md` 继续保持短小，并通过相对路径引用同一 Skill 目录中的脚本和 references。
@@ -223,7 +223,7 @@ pretty-doc path/to/report.md --open
 改为：
 
 ```bash
-python3 skills/ob-methods-results-audit/scripts/render_report.py path/to/report.md --open
+python3 skills/ob-methods-results-check/scripts/render_report.py path/to/report.md --open
 ```
 
 同时明确：脚本路径必须相对于 Skill 目录解析，不能假定当前工作目录是 Skill 仓库。
@@ -244,7 +244,7 @@ compatibility: Designed for coding agents that support Agent Skills. Python 3 is
 在工作流最前方加入两阶段检查。若 `python3` 可用，再调用：
 
 ```bash
-python3 skills/ob-methods-results-audit/scripts/check_environment.py
+python3 skills/ob-methods-results-check/scripts/check_environment.py
 ```
 
 Agent 应根据 JSON 决定使用完整视觉审计还是降级审计。
@@ -275,7 +275,7 @@ Agent 应根据 JSON 决定使用完整视觉审计还是降级审计。
 当前 `agents/openai.yaml` 默认 prompt 要求生成 Chinese HTML report。公开版本改为：
 
 ```yaml
-default_prompt: "Use $ob-methods-results-audit to audit this manuscript's Methods and Results before submission. Prioritize issues that may change core conclusions, distinguish confirmed inconsistencies from items requiring raw-output review, and deliver an editable Markdown report plus an HTML reading copy when local rendering is available."
+default_prompt: "Use $ob-methods-results-check to audit this manuscript's Methods and Results before submission. Prioritize issues that may change core conclusions, distinguish confirmed inconsistencies from items requiring raw-output review, and deliver an editable Markdown report plus an HTML reading copy when local rendering is available."
 ```
 
 语言跟随用户，不再硬编码中文。

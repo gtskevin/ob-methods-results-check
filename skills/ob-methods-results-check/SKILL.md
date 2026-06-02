@@ -1,5 +1,5 @@
 ---
-name: ob-methods-results-audit
+name: ob-methods-results-check
 description: Audit organizational behavior, management, HRM, and work-psychology manuscript Methods and Results sections before submission. Use when checking field surveys, scenario experiments, mediation, moderation, moderated mediation, CFA, SEM, multilevel reporting, statistical consistency, tables, figures, causal claims, or when the user wants to catch analysis and reporting risks before further writing or journal submission.
 license: MIT. See LICENSE.txt
 compatibility: Portable agent skill. Python 3 and PDF text/page tools are optional; documented fallbacks preserve a Markdown audit.
@@ -22,7 +22,7 @@ Review Methods and Results as a pre-submission audit. Follow the user's language
 Before any bundled command, resolve the directory containing the loaded `SKILL.md` to an absolute path, not relative to the user's current working directory. Either substitute that absolute path directly in each command or initialize:
 
 ```bash
-SKILL_DIR="/absolute/path/to/ob-methods-results-audit"
+SKILL_DIR="/absolute/path/to/ob-methods-results-check"
 ```
 
 Before auditing, check the runtime:

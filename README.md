@@ -50,34 +50,44 @@
 
 ## 快速开始
 
-> ⏱️ **一分钟安装**
+> ⏱️ **30 秒安装，1 分钟上手**
 
-**方式一：GitHub CLI 安装（推荐）**
+**方式一：告诉你的 AI 助手安装（最简单）**
+
+复制下面这段话，粘贴到你的 AI 助手（Claude Code、Codex 等）对话框中：
+
+```
+请帮我安装这个 Skill：https://github.com/gtskevin/ob-methods-results-check
+安装后告诉我它能帮我做什么。
+```
+
+你的 AI 助手会自动完成安装，并向你介绍工具的功能。
+
+**方式二：GitHub CLI 安装**
 
 ```bash
 # Claude Code 用户
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent claude-code --scope user
+gh skill install gtskevin/ob-methods-results-check ob-methods-results-check --agent claude-code --scope user
 
 # Codex 用户
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+gh skill install gtskevin/ob-methods-results-check ob-methods-results-check --agent codex --scope user
 ```
 
-**方式二：手动安装**
+**方式三：手动安装**
 
 ```bash
-git clone https://github.com/gtskevin/ob-methods-results-audit.git
+git clone https://github.com/gtskevin/ob-methods-results-check.git
 mkdir -p ~/.claude/skills
-ln -s "$(pwd)/ob-methods-results-audit/skills/ob-methods-results-audit" ~/.claude/skills/ob-methods-results-audit
+ln -s "$(pwd)/ob-methods-results-check/skills/ob-methods-results-check" ~/.claude/skills/ob-methods-results-check
 ```
 
 **安装后使用：**
 
 直接告诉你的 AI 助手：
 
-> 请用 `$ob-methods-results-audit` 审计我的论文 Methods 和 Results 部分。
+> 请用 `$ob-methods-results-check` 审计我的论文 Methods 和 Results 部分。
 
 工具会自动跟随你请求的语言生成报告。用中文提问 = 中文报告，英文提问 = 英文报告。
-
 ## 审计输出示例
 
 审计完成后，你将获得：
@@ -162,10 +172,10 @@ audit-reports/
 
 ```bash
 # GitHub CLI 安装
-gh skill update ob-methods-results-audit
+gh skill update ob-methods-results-check
 
 # 手动安装
-cd /path/to/ob-methods-results-audit && git pull
+cd /path/to/ob-methods-results-check && git pull
 ```
 </details>
 
@@ -174,8 +184,8 @@ cd /path/to/ob-methods-results-audit && git pull
 
 ```bash
 # 符号链接安装
-test ! -L ~/.agents/skills/ob-methods-results-audit || rm ~/.agents/skills/ob-methods-results-audit
-test ! -L ~/.claude/skills/ob-methods-results-audit || rm ~/.claude/skills/ob-methods-results-audit
+test ! -L ~/.agents/skills/ob-methods-results-check || rm ~/.agents/skills/ob-methods-results-check
+test ! -L ~/.claude/skills/ob-methods-results-check || rm ~/.claude/skills/ob-methods-results-check
 ```
 </details>
 
@@ -184,7 +194,7 @@ test ! -L ~/.claude/skills/ob-methods-results-audit || rm ~/.claude/skills/ob-me
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-agentskills validate skills/ob-methods-results-audit
+agentskills validate skills/ob-methods-results-check
 gh skill publish --dry-run
 ```
 

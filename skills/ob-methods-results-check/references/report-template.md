@@ -43,7 +43,7 @@ Save the report to an absolute `audit-reports/<paper-slug>/` path under the dire
 Before invoking bundled tools, resolve the directory containing the loaded `SKILL.md` to an absolute path. Either substitute that absolute path directly or initialize:
 
 ```bash
-SKILL_DIR="/absolute/path/to/ob-methods-results-audit"
+SKILL_DIR="/absolute/path/to/ob-methods-results-check"
 ```
 
 When Python is available, invoke the bundled renderer with absolute paths:

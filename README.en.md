@@ -50,32 +50,42 @@ Seven built-in audit rubrics, auto-loaded based on your study design:
 
 ## Quick Start
 
-> ⏱️ **Install in under a minute**
+> ⏱️ **30 seconds to install, 1 minute to start**
 
-**Option 1: GitHub CLI (recommended)**
+**Option 1: Ask your AI agent to install (easiest)**
+
+Copy and paste this into your AI agent (Claude Code, Codex, etc.):
+
+```
+Please install this Skill for me: https://github.com/gtskevin/ob-methods-results-check
+After installing, tell me what it can do.
+```
+
+Your agent will handle the installation automatically and explain the tool's capabilities.
+
+**Option 2: GitHub CLI**
 
 ```bash
 # For Claude Code
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent claude-code --scope user
+gh skill install gtskevin/ob-methods-results-check ob-methods-results-check --agent claude-code --scope user
 
 # For Codex
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+gh skill install gtskevin/ob-methods-results-check ob-methods-results-check --agent codex --scope user
 ```
 
-**Option 2: Manual install**
+**Option 3: Manual install**
 
 ```bash
-git clone https://github.com/gtskevin/ob-methods-results-audit.git
+git clone https://github.com/gtskevin/ob-methods-results-check.git
 mkdir -p ~/.claude/skills
-ln -s "$(pwd)/ob-methods-results-audit/skills/ob-methods-results-audit" ~/.claude/skills/ob-methods-results-audit
+ln -s "$(pwd)/ob-methods-results-check/skills/ob-methods-results-check" ~/.claude/skills/ob-methods-results-check
 ```
 
 **After install, tell your agent:**
 
-> Use `$ob-methods-results-audit` to audit my Methods and Results sections.
+> Use `$ob-methods-results-check` to audit my Methods and Results sections.
 
 The report language follows your request language. Ask in Chinese = Chinese report. Ask in English = English report.
-
 ## Audit output
 
 After the audit completes:
@@ -160,10 +170,10 @@ Yes. Without Python, the tool falls back to a Markdown-only audit, skips stat re
 
 ```bash
 # GitHub CLI install
-gh skill update ob-methods-results-audit
+gh skill update ob-methods-results-check
 
 # Manual install
-cd /path/to/ob-methods-results-audit && git pull
+cd /path/to/ob-methods-results-check && git pull
 ```
 </details>
 
@@ -172,8 +182,8 @@ cd /path/to/ob-methods-results-audit && git pull
 
 ```bash
 # Symlink installs
-test ! -L ~/.agents/skills/ob-methods-results-audit || rm ~/.agents/skills/ob-methods-results-audit
-test ! -L ~/.claude/skills/ob-methods-results-audit || rm ~/.claude/skills/ob-methods-results-audit
+test ! -L ~/.agents/skills/ob-methods-results-check || rm ~/.agents/skills/ob-methods-results-check
+test ! -L ~/.claude/skills/ob-methods-results-check || rm ~/.claude/skills/ob-methods-results-check
 ```
 </details>
 
@@ -184,7 +194,7 @@ Run the local test suite and validate the Agent Skills package:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-agentskills validate skills/ob-methods-results-audit
+agentskills validate skills/ob-methods-results-check
 gh skill publish --dry-run
 ```
 

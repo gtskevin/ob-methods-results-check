@@ -19,7 +19,7 @@ jobs:
       - name: Install Agent Skills validator
         run: python -m pip install skills-ref
       - name: Validate Agent Skills package
-        run: agentskills validate skills/ob-methods-results-audit
+        run: agentskills validate skills/ob-methods-results-check
 
       - name: Reject tracked generated artifacts
         run: |
