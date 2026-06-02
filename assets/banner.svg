@@ -27,16 +27,16 @@
         font-size="15" class="sub" fill="#64748b">
     论文 Methods &amp; Results 投稿前智能审计
   </text>
-  <rect x="215" y="155" width="150" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
-  <text x="290" y="174" text-anchor="middle" font-family="monospace" font-size="12" fill="#6366f1">
-    $ob-methods-results-audit
+  <rect x="215" y="155" width="170" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="300" y="174" text-anchor="middle" font-family="monospace" font-size="12" fill="#6366f1">
+    $ob-methods-results-check
   </text>
-  <rect x="380" y="155" width="100" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
-  <text x="430" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#059669">
+  <rect x="400" y="155" width="100" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="450" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#059669">
     Claude Code
   </text>
-  <rect x="495" y="155" width="80" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
-  <text x="535" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#2563eb">
+  <rect x="515" y="155" width="80" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="555" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#2563eb">
     Codex
   </text>
 </svg>

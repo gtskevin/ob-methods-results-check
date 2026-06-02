@@ -1,4 +1,4 @@
-**English** | [中文](README.md)
+[English](README.en.md) | [中文](README.md)
 
 <div align="center">
 
@@ -7,12 +7,13 @@
 <br/>
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE.txt)
-[![Python](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
 [![Agent Skill](https://img.shields.io/badge/Agent-Skill-6366f1?style=for-the-badge)]()
+[![CI](https://img.shields.io/github/actions/workflow/status/gtskevin/ob-methods-results-check/test.yml?style=for-the-badge)](https://github.com/gtskevin/ob-methods-results-check/actions)
 
 </div>
 
-> **Who is this for?** You write manuscripts in organizational behavior, management, HRM, or work psychology. Your Methods and Results are drafted, but you are unsure whether the statistics are internally consistent, tables align, and causal claims are defensible. This tool runs a systematic pre-submission audit so you catch issues before the journal does.
+> **Who is this for?** You write manuscripts in organizational behavior, management, HRM, or work psychology. Your Methods and Results are drafted, but you are unsure whether the statistics are internally consistent, tables align, and causal claims are defensible. This tool runs a systematic pre-submission audit so **you catch issues before the reviewers do**.
 
 ---
 
@@ -23,7 +24,7 @@
 | 🔍 | **Statistical consistency checks** | Recalculates reported F, t, p, R², effect sizes to catch computation errors and typos |
 | 📊 | **Table and figure review** | Verifies internal consistency across tables, complete captions, and alignment with method descriptions |
 | 🧠 | **Design and inference evaluation** | AI evaluates your experimental design, mediation/moderation tests, CFA/SEM models for logical gaps |
-| 📝 | **Reporting completeness** | Checks against field standards (APA reporting guidelines) for missing statistical indicators |
+| 📝 | **Reporting completeness** | Checks against APA reporting guidelines for missing statistical indicators |
 | 🛡️ | **Privacy and safety** | Local processing only, no participant identifiers in reports, no automatic code execution |
 
 ## Adaptive audit depth
@@ -33,7 +34,7 @@ No manual mode selection — depth adapts to the artifacts you provide:
 | What you provide | Audit scope |
 |---|---------|
 | Manuscript only | Internal consistency + reported-value recalculation + list of follow-up artifacts |
-| Manuscript + software output | Adds: manuscript–output cross-checks |
+| Manuscript + software output | Adds: manuscript-output cross-checks |
 | Manuscript + output + code + data | Adds: reproduction of high-risk results (requires your explicit approval) |
 | Quick screen | Likely P0 issues and next files needed only |
 
@@ -61,8 +62,6 @@ Please install this Skill for me: https://github.com/gtskevin/ob-methods-results
 After installing, tell me what it can do.
 ```
 
-Your agent will handle the installation automatically and explain the tool's capabilities.
-
 **Option 2: GitHub CLI**
 
 ```bash
@@ -86,6 +85,32 @@ ln -s "$(pwd)/ob-methods-results-check/skills/ob-methods-results-check" ~/.claud
 > Use `$ob-methods-results-check` to audit my Methods and Results sections.
 
 The report language follows your request language. Ask in Chinese = Chinese report. Ask in English = English report.
+
+## Usage examples
+
+**Basic — manuscript only:**
+
+```
+Use $ob-methods-results-check to audit the Methods and Results sections of this paper.
+File: /path/to/manuscript.pdf
+```
+
+**With supplementary materials for deeper audit:**
+
+```
+Use $ob-methods-results-check to audit this paper.
+Manuscript: /path/to/manuscript.pdf
+SPSS output: /path/to/output.spv
+Mplus output: /path/to/model.out
+```
+
+**Quick screen:**
+
+```
+Use $ob-methods-results-check for a quick check of this paper's key issues.
+File: /path/to/manuscript.pdf
+```
+
 ## Audit output
 
 After the audit completes:
@@ -101,10 +126,40 @@ audit-reports/
 
 | Section | Content |
 |---------|---------|
-| P0: Core conclusion risks | Issues that may change a core conclusion |
-| P1: Pre-submission must-fix | Issues to resolve before submitting |
-| P2: Reporting improvements | Transparency, wording, and formatting suggestions |
-| Evidence status | ✅ CONFIRMED / ⚠️ LIKELY / 🔎 REVIEW_REQUIRED / ✏️ WORDING |
+| **P0: Core conclusion risks** | Issues that may change a core conclusion |
+| **P1: Pre-submission must-fix** | Issues to resolve before submitting |
+| **P2: Reporting improvements** | Transparency, wording, and formatting suggestions |
+
+**Evidence status labels:**
+
+| Label | Meaning |
+|-------|---------|
+| ✅ CONFIRMED | Manuscript-internal evidence proves the inconsistency |
+| ⚠️ LIKELY | Strong risk signal; inspect original output |
+| 🔎 REVIEW_REQUIRED | Important question requiring data, code, or software output |
+| ✏️ WORDING | Interpretation or reporting should be tightened |
+
+**HTML report features:**
+- Audit summary dashboard — P0/P1/P2 counts at a glance
+- Finding cards — severity pills, evidence status badges, scroll animations
+- Actionable vs. design-limitation separation — fixable issues highlighted; structural limitations collapsed
+- Warm editorial design — paper-toned palette, responsive layout, dark mode, print styles
+
+## How it works
+
+```
+Your manuscript (PDF / DOCX / TXT)
+    │
+    ├── 1. Environment check → Confirm available tools
+    ├── 2. Artifact inventory → Identify study design type
+    ├── 3. Rubric loading → Match your research methods
+    ├── 4. Stat recalculation (Python) → Verify reported values
+    ├── 5. AI audit evaluation → Design logic + inference risks
+    ├── 6. Evidence ledger → Each issue with location and evidence
+    └── 7. Report generation → Markdown + HTML
+```
+
+**Core principle:** Scripts handle deterministic math. LLM handles judgment calls. Neither replaces the other.
 
 ## Optional dependencies
 
@@ -117,20 +172,6 @@ Basic auditing works without any dependencies:
 | `pdftoppm` | PDF page rendering (visual table/figure checks) | Optional |
 
 Without Python, the tool falls back to a Markdown-only audit and discloses unavailable features in the report.
-
-## How it works
-
-```
-Your manuscript (PDF/DOCX/TXT)
-    │
-    ├── 1. Environment check → Confirm available tools
-    ├── 2. Artifact inventory → Identify study design type
-    ├── 3. Rubric loading → Match your research methods
-    ├── 4. Stat recalculation → Verify reported values (needs Python)
-    ├── 5. AI audit evaluation → Design logic + inference risks
-    ├── 6. Evidence ledger → Each issue with location and evidence
-    └── 7. Report generation → Markdown + HTML
-```
 
 ## Privacy and safety
 
@@ -166,6 +207,12 @@ Yes. Without Python, the tool falls back to a Markdown-only audit, skips stat re
 </details>
 
 <details>
+<summary>How long does an audit take?</summary>
+
+Depends on manuscript length and research design complexity. A typical 3-study paper (survey + experiment + mediation/moderation) takes about 10-20 minutes for a full audit. Quick screen mode takes 3-5 minutes.
+</details>
+
+<details>
 <summary>How do I update?</summary>
 
 ```bash
@@ -186,17 +233,6 @@ test ! -L ~/.agents/skills/ob-methods-results-check || rm ~/.agents/skills/ob-me
 test ! -L ~/.claude/skills/ob-methods-results-check || rm ~/.claude/skills/ob-methods-results-check
 ```
 </details>
-
-## Verify
-
-Run the local test suite and validate the Agent Skills package:
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 -m pip install skills-ref
-agentskills validate skills/ob-methods-results-check
-gh skill publish --dry-run
-```
 
 ## Contributing
 
