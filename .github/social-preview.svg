@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bg { fill: #0f172a; } .title { fill: #f1f5f9; } .sub { fill: #94a3b8; }
+        .card { fill: #1e293b; } .pill { fill: #334155; } .pill-t { fill: #60a5fa; }
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="630" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#6366f1"/>
+  <!-- Left: check marks -->
+  <rect x="60" y="80" width="420" height="470" rx="20" class="card" fill="#e2e8f0"/>
+  <text x="90" y="140" font-size="18" font-weight="bold" fill="#334155" font-family="system-ui,sans-serif">🔍 审计检查项</text>
+  <text x="100" y="185" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 统计一致性验算</text>
+  <text x="100" y="225" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 表格数据交叉比对</text>
+  <text x="100" y="265" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 设计逻辑评估</text>
+  <text x="100" y="305" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 报告完整性检查</text>
+  <text x="100" y="345" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ APA 规范对照</text>
+  <text x="100" y="385" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 中介/调节/CFA/SEM</text>
+  <text x="100" y="425" font-size="16" fill="#64748b" font-family="system-ui,sans-serif">✅ 多层模型审查</text>
+  <!-- Right: title -->
+  <text x="560" y="150" font-size="44" font-weight="bold" fill="#0f172a" font-family="'PingFang SC','Noto Sans SC',system-ui,sans-serif">OB 论文 Methods &amp; Results</text>
+  <text x="560" y="210" font-size="44" font-weight="bold" fill="#0f172a" font-family="'PingFang SC','Noto Sans SC',system-ui,sans-serif">投稿前智能审计</text>
+  <text x="560" y="270" font-size="18" fill="#64748b" font-family="system-ui,sans-serif">Pre-submission Methods &amp; Results Audit for OB/HRM Papers</text>
+  <text x="560" y="330" font-size="16" fill="#475569" font-family="'PingFang SC',system-ui,sans-serif">
+    <tspan x="560" dy="0">自动验算统计值 · 交叉比对表格 · 评估研究设计</tspan>
+    <tspan x="560" dy="28">内置 7 个专业审计模板 · 支持中英文论文</tspan>
+  </text>
+  <!-- Pills -->
+  <rect x="560" y="410" width="120" height="30" rx="15" class="pill" fill="#e2e8f0"/>
+  <text x="620" y="430" text-anchor="middle" font-size="13" class="pill-t" fill="#6366f1" font-family="monospace">Agent Skill</text>
+  <rect x="695" y="410" width="90" height="30" rx="15" class="pill" fill="#e2e8f0"/>
+  <text x="740" y="430" text-anchor="middle" font-size="13" class="pill-t" fill="#6366f1" font-family="monospace">Python</text>
+  <rect x="800" y="410" width="80" height="30" rx="15" class="pill" fill="#e2e8f0"/>
+  <text x="840" y="430" text-anchor="middle" font-size="13" class="pill-t" fill="#6366f1" font-family="monospace">MIT</text>
+  <text x="560" y="500" font-size="14" fill="#94a3b8" font-family="monospace">gtskevin.github.io/ob-methods-results-check</text>
+</svg>
