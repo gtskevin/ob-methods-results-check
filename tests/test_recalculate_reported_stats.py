@@ -5,7 +5,13 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "recalculate_reported_stats.py"
+SCRIPT = (
+    Path(__file__).parents[1]
+    / "skills"
+    / "ob-methods-results-audit"
+    / "scripts"
+    / "recalculate_reported_stats.py"
+)
 
 
 def run_cli(*args, expect_ok=True):
@@ -77,4 +83,3 @@ class RecalculateReportedStatsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

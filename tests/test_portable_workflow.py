@@ -8,9 +8,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-ENV_SCRIPT = ROOT / "scripts" / "check_environment.py"
-RENDER_SCRIPT = ROOT / "scripts" / "render_report.py"
-STATS_SCRIPT = ROOT / "scripts" / "recalculate_reported_stats.py"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+ENV_SCRIPT = SKILL_ROOT / "scripts" / "check_environment.py"
+RENDER_SCRIPT = SKILL_ROOT / "scripts" / "render_report.py"
+STATS_SCRIPT = SKILL_ROOT / "scripts" / "recalculate_reported_stats.py"
 FIXTURE = ROOT / "tests" / "fixtures" / "sample-report.md"
 
 

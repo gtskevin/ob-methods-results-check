@@ -9,7 +9,8 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).parents[1]
-SCRIPT = ROOT / "scripts" / "render_report.py"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+SCRIPT = SKILL_ROOT / "scripts" / "render_report.py"
 FIXTURE = ROOT / "tests" / "fixtures" / "sample-report.md"
 SPEC = importlib.util.spec_from_file_location("render_report", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)

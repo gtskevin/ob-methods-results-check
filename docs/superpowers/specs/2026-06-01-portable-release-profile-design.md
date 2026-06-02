@@ -67,6 +67,14 @@ GitHub 仓库根目录提供面向人的 `README.md`，说明：
 
 README 同时提示：安装或更新后，如果 Agent 没有立即发现 Skill，应重启会话或按产品文档重新加载。
 
+公开发布后，优先推荐 GitHub CLI 安装：
+
+```bash
+gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+```
+
+手工 clone + symlink 保留为兼容路径，symlink 目标指向仓库中的 `skills/ob-methods-results-audit/`。
+
 ### 4.2 首次使用
 
 用户可以直接提出目标，例如：
@@ -177,35 +185,29 @@ audit-reports/<paper-slug>/
 ob-methods-results-audit/
 ├── README.md
 ├── LICENSE.txt
-├── SKILL.md
-├── agents/
-│   └── openai.yaml
-├── references/
-│   ├── audit-rubric.md
-│   ├── experiment-design.md
-│   ├── mediation-moderation.md
-│   ├── multilevel.md
-│   ├── report-template.md
-│   ├── reporting-transparency.md
-│   ├── sem-cfa.md
-│   └── survey-design.md
-├── scripts/
-│   ├── check_environment.py
-│   ├── recalculate_reported_stats.py
-│   └── render_report.py
+├── .github/workflows/test.yml
+├── skills/
+│   └── ob-methods-results-audit/
+│       ├── LICENSE.txt
+│       ├── SKILL.md
+│       ├── agents/
+│       │   └── openai.yaml
+│       ├── references/
+│       │   └── ...
+│       └── scripts/
+│           ├── check_environment.py
+│           ├── recalculate_reported_stats.py
+│           └── render_report.py
 └── tests/
-    ├── fixtures/
-    │   └── sample-report.md
-    ├── test_check_environment.py
-    ├── test_recalculate_reported_stats.py
-    └── test_render_report.py
+    └── ...
 ```
 
 说明：
 
-- `README.md` 服务于 GitHub 发布，不应从 `SKILL.md` 引用或默认加载。
-- `LICENSE.txt` 既服务于 GitHub 发布，也通过 frontmatter 的 `license` 字段声明。
-- `SKILL.md` 继续保持短小，并通过相对路径引用脚本和 references。
+- 仓库根目录是 GitHub CLI 发布容器；`skills/ob-methods-results-audit/` 是可独立安装的 Skill 根目录。
+- 根目录 `README.md` 服务于 GitHub 发布，不应从 `SKILL.md` 引用或默认加载。
+- 根目录和 Skill 目录都保留 `LICENSE.txt`，确保 GitHub 页面和安装包都能看到许可证。
+- `SKILL.md` 继续保持短小，并通过相对路径引用同一 Skill 目录中的脚本和 references。
 - 不提交 `__pycache__`、生成的 HTML 或用户审计结果。
 
 ## 7. SKILL.md 调整
@@ -221,7 +223,7 @@ pretty-doc path/to/report.md --open
 改为：
 
 ```bash
-python3 scripts/render_report.py path/to/report.md --open
+python3 skills/ob-methods-results-audit/scripts/render_report.py path/to/report.md --open
 ```
 
 同时明确：脚本路径必须相对于 Skill 目录解析，不能假定当前工作目录是 Skill 仓库。
@@ -242,7 +244,7 @@ compatibility: Designed for coding agents that support Agent Skills. Python 3 is
 在工作流最前方加入两阶段检查。若 `python3` 可用，再调用：
 
 ```bash
-python3 scripts/check_environment.py
+python3 skills/ob-methods-results-audit/scripts/check_environment.py
 ```
 
 Agent 应根据 JSON 决定使用完整视觉审计还是降级审计。

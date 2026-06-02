@@ -847,7 +847,7 @@ Expected: 5 tests PASS.
 Run:
 
 ```bash
-python3 scripts/render_report.py tests/fixtures/sample-report.md --output /tmp/ob-methods-results-audit-sample.html --overwrite
+python3 skills/ob-methods-results-audit/scripts/render_report.py tests/fixtures/sample-report.md --output /tmp/ob-methods-results-audit-sample.html --overwrite
 ```
 
 Expected: stdout prints `/tmp/ob-methods-results-audit-sample.html`. Open the file locally and confirm headings, table, blockquote, Unicode, and escaped `<script>` text are readable.
@@ -992,11 +992,7 @@ jobs:
       - name: Install Agent Skills validator
         run: python -m pip install skills-ref
       - name: Validate Agent Skills package
-        run: |
-          rm -rf /tmp/agent-skills-validation
-          mkdir -p /tmp/agent-skills-validation
-          ln -s "$GITHUB_WORKSPACE" /tmp/agent-skills-validation/ob-methods-results-audit
-          agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
+        run: agentskills validate skills/ob-methods-results-audit
 ```
 
 - [ ] **Step 2: Add contributor verification commands to README**
@@ -1009,10 +1005,7 @@ Append:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-rm -rf /tmp/agent-skills-validation
-mkdir -p /tmp/agent-skills-validation
-ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
-agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
+agentskills validate skills/ob-methods-results-audit
 ```
 
 GitHub CLI 2.90.0 or later also provides a public-preview publishing check:
@@ -1039,10 +1032,7 @@ Run in an isolated temporary environment:
 ```bash
 python3 -m venv /tmp/ob-methods-results-audit-validate
 /tmp/ob-methods-results-audit-validate/bin/python -m pip install skills-ref
-rm -rf /tmp/agent-skills-validation
-mkdir -p /tmp/agent-skills-validation
-ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
+/tmp/ob-methods-results-audit-validate/bin/agentskills validate skills/ob-methods-results-audit
 ```
 
 Expected: validator exits `0` with no Agent Skills specification errors.
@@ -1096,7 +1086,7 @@ Expected: all tests PASS.
 Run:
 
 ```bash
-python3 scripts/check_environment.py
+python3 skills/ob-methods-results-audit/scripts/check_environment.py
 ```
 
 Expected: valid JSON showing Python plus available or unavailable optional tools.
@@ -1106,7 +1096,7 @@ Expected: valid JSON showing Python plus available or unavailable optional tools
 Run:
 
 ```bash
-python3 scripts/render_report.py docs/superpowers/specs/2026-06-01-portable-release-profile-design.md --output /tmp/portable-release-profile-design.html --overwrite --open
+python3 skills/ob-methods-results-audit/scripts/render_report.py docs/superpowers/specs/2026-06-01-portable-release-profile-design.md --output /tmp/portable-release-profile-design.html --overwrite --open
 ```
 
 Expected: HTML is generated and readable without invoking `pretty-doc`.
@@ -1116,7 +1106,7 @@ Expected: HTML is generated and readable without invoking `pretty-doc`.
 Run:
 
 ```bash
-/tmp/ob-methods-results-audit-validate/bin/agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
+/tmp/ob-methods-results-audit-validate/bin/agentskills validate skills/ob-methods-results-audit
 ```
 
 Expected: exit `0`.
@@ -1167,3 +1157,18 @@ Report:
 3. The HTML renderer supports the report template syntax, not every Markdown extension.
 4. User analysis scripts are never executed automatically.
 5. The Skill does not promise complete statistical reproduction.
+
+## GitHub CLI Publishing Layout Addendum
+
+The GitHub CLI publishing preview validates repositories as Skill containers. The installable bundle therefore lives under:
+
+```text
+skills/ob-methods-results-audit/
+```
+
+Repository-level documentation, CI, and tests remain at the root. Bundled scripts and references remain inside the Skill directory so an installed release is self-contained. Validate the final publishing layout with:
+
+```bash
+agentskills validate skills/ob-methods-results-audit
+gh skill publish --dry-run
+```

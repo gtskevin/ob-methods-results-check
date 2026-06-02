@@ -8,7 +8,8 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).parents[1]
-SCRIPT = ROOT / "scripts" / "check_environment.py"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+SCRIPT = SKILL_ROOT / "scripts" / "check_environment.py"
 SPEC = importlib.util.spec_from_file_location("check_environment", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

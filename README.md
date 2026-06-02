@@ -19,17 +19,32 @@ Audit depth adapts to the files you provide:
 
 ## Install
 
-Keep a stable clone of this repository, create the agent skill parent directories, then create the symlink for your agent:
+GitHub CLI 2.90.0 or later can install the published Skill directly. Choose your agent and user scope:
+
+```bash
+gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent claude-code --scope user
+```
+
+Use either command or both. To install another supported coding agent, replace the `--agent` value. Run `gh skill install --help` for the current list.
+
+For manual installation, keep a stable clone of this repository and symlink the bundled Skill directory:
 
 ```bash
 mkdir -p ~/.agents/skills ~/.claude/skills
-ln -s /absolute/path/to/ob-methods-results-audit ~/.agents/skills/ob-methods-results-audit
-ln -s /absolute/path/to/ob-methods-results-audit ~/.claude/skills/ob-methods-results-audit
+ln -s /absolute/path/to/ob-methods-results-audit/skills/ob-methods-results-audit ~/.agents/skills/ob-methods-results-audit
+ln -s /absolute/path/to/ob-methods-results-audit/skills/ob-methods-results-audit ~/.claude/skills/ob-methods-results-audit
 ```
 
-The first path installs the skill for Codex-compatible agents. The second installs it for Claude Code. Use either or both. `ln -s` fails when the destination already exists: inspect that path and do not silently replace an arbitrary existing file, directory, or link.
+The first symlink installs the Skill for Codex-compatible agents. The second installs it for Claude Code. `ln -s` fails when the destination already exists: inspect that path and do not silently replace an arbitrary existing file, directory, or link.
 
-Update the stable clone in place so the symlink continues to target the current files:
+Update a GitHub CLI installation with:
+
+```bash
+gh skill update ob-methods-results-audit
+```
+
+For a manual symlink installation, update the stable clone in place:
 
 ```bash
 cd /absolute/path/to/ob-methods-results-audit
@@ -82,16 +97,8 @@ Run the local suite and validate the Agent Skills package:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m pip install skills-ref
-rm -rf /tmp/agent-skills-validation
-mkdir -p /tmp/agent-skills-validation
-ln -s "$PWD" /tmp/agent-skills-validation/ob-methods-results-audit
-agentskills validate /tmp/agent-skills-validation/ob-methods-results-audit
-```
-
-The temporary symlink is required because the validator expects the directory name to match the Skill name.
-
-GitHub CLI 2.90.0 or later also provides a public-preview publishing check:
-
-```bash
+agentskills validate skills/ob-methods-results-audit
 gh skill publish --dry-run
 ```
+
+The `gh skill` commands are currently public preview and may change.
