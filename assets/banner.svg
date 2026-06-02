@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="220" viewBox="0 0 800 220">
+  <defs>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bg { fill: #0f172a; }
+        .title { fill: #f1f5f9; }
+        .sub { fill: #94a3b8; }
+        .pill-bg { fill: #1e293b; }
+      }
+    </style>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect class="bg" width="800" height="220" rx="16" fill="#f8fafc"/>
+  <rect x="0" y="0" width="800" height="6" rx="3" fill="url(#accent)"/>
+  <text x="400" y="72" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif"
+        font-size="36" font-weight="bold" class="title" fill="#0f172a">
+    OB Methods Results Audit
+  </text>
+  <text x="400" y="108" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif"
+        font-size="15" class="sub" fill="#64748b">
+    组织行为学 · 管理学 · 人力资源管理 · 工作心理学
+  </text>
+  <text x="400" y="132" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif"
+        font-size="15" class="sub" fill="#64748b">
+    论文 Methods &amp; Results 投稿前智能审计
+  </text>
+  <rect x="215" y="155" width="150" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="290" y="174" text-anchor="middle" font-family="monospace" font-size="12" fill="#6366f1">
+    $ob-methods-results-audit
+  </text>
+  <rect x="380" y="155" width="100" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="430" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#059669">
+    Claude Code
+  </text>
+  <rect x="495" y="155" width="80" height="28" rx="14" class="pill-bg" fill="#e2e8f0"/>
+  <text x="535" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#2563eb">
+    Codex
+  </text>
+</svg>

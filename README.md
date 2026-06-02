@@ -1,98 +1,185 @@
-# OB Methods Results Audit
+[English](README.en.md) | **中文**
 
-`ob-methods-results-audit` is a portable agent skill for reviewing Methods and Results sections in organizational behavior, management, HRM, and work-psychology manuscripts before submission.
+<div align="center">
 
-## Scope
+<img src="assets/banner.svg" alt="OB Methods Results Audit — 论文 Methods &amp; Results 投稿前智能审计" width="800">
 
-The skill checks internal consistency, reported statistics, tables, figures, reporting completeness, and interpretation risks. It uses model judgment for design and inference questions and bundled scripts only for deterministic recalculation and report rendering.
+<br/>
 
-This is a pre-submission Methods and Results audit. It can complement, but does not replace, a full manuscript peer review focused on theory, contribution, journal fit, and editorial recommendation. Dissertation evaluation and questionnaire scale translation or adaptation review are also better handled by specialist workflows when available.
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE.txt)
+[![Python](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
+[![Agent Skill](https://img.shields.io/badge/Agent-Skill-6366f1?style=for-the-badge)]()
 
-## Audit depth
+</div>
 
-Audit depth adapts to the files you provide:
+> **谁需要这个工具？** 你正在撰写组织行为学、管理学、人力资源管理或工作心理学方向的英文/中文论文，准备投期刊。你的 Methods 和 Results 写完了，但不确定统计报告是否一致、表格数据是否对得上、因果推断是否站得住。这个工具帮你做一轮系统性的投稿前检查。
 
-- Manuscript only: internal consistency checks, reported-value recalculation when possible, and a list of follow-up files.
-- Manuscript plus software output: manuscript-output cross-checks.
-- Manuscript plus output, code, and data: selected reproduction of high-risk results when feasible and explicitly approved.
-- Quick screen: likely high-priority issues and the next files needed.
+---
 
-## Install
+## 核心功能
 
-GitHub CLI 2.90.0 or later can install the published Skill directly. Choose your agent and user scope:
+| | 功能 | 为什么重要 |
+|---|------|-----------|
+| 🔍 | **统计一致性检查** | 自动验算报告中的 F 值、t 值、p 值、R²、效应量等，发现计算错误或笔误 |
+| 📊 | **表格与图表审查** | 检查表格内数据是否前后一致，图注是否完整，数字是否与方法部分描述匹配 |
+| 🧠 | **设计与推断评估** | AI 判断你的实验设计、中介/调节检验、CFA/SEM 模型是否有逻辑漏洞 |
+| 📝 | **报告完整性检查** | 对照领域标准（如 APA 报告规范），检查是否遗漏关键统计指标 |
+| 🛡️ | **隐私与安全** | 原始数据在本地处理，报告中不含被试身份信息，不自动执行你的分析代码 |
+
+## 审计深度自适应
+
+你提供的材料越多，审计越深入——无需手动选择模式：
+
+| 你提供的材料 | 审计范围 |
+|---|------|
+| 仅论文 | 内部一致性检查 + 报告值验算 + 建议补充材料清单 |
+| 论文 + 统计软件输出 | 增加：论文与输出交叉比对 |
+| 论文 + 输出 + 代码 + 数据 | 增加：高风险结果复算（需你明确批准） |
+| 快速筛查 | 仅报告最高优先级问题 + 下一步需要的文件 |
+
+## 支持的研究设计
+
+内置 7 个专业审计参考模板，根据你的研究设计自动加载：
+
+- 📋 **问卷调查** — 共同方法偏差、Harman 单因子检验、信效度报告
+- 🧪 **实验设计** — 操纵检验、随机化检查、混淆变量
+- 🔄 **中介与调节** — Bootstrap 程序、间接效应报告、条件间接效应
+- 📐 **CFA / SEM** — 模型拟合指标、因子载荷、判别效度
+- 📊 **多层模型** — ICC、组内/组间效应、跨层假设
+- ✅ **报告透明度** — 效应量、置信区间、预处理公开
+
+## 快速开始
+
+> ⏱️ **一分钟安装**
+
+**方式一：GitHub CLI 安装（推荐）**
 
 ```bash
-gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
+# Claude Code 用户
 gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent claude-code --scope user
+
+# Codex 用户
+gh skill install gtskevin/ob-methods-results-audit ob-methods-results-audit --agent codex --scope user
 ```
 
-Use either command or both. To install another supported coding agent, replace the `--agent` value. Run `gh skill install --help` for the current list.
-
-For manual installation, keep a stable clone of this repository and symlink the bundled Skill directory:
+**方式二：手动安装**
 
 ```bash
-mkdir -p ~/.agents/skills ~/.claude/skills
-ln -s /absolute/path/to/ob-methods-results-audit/skills/ob-methods-results-audit ~/.agents/skills/ob-methods-results-audit
-ln -s /absolute/path/to/ob-methods-results-audit/skills/ob-methods-results-audit ~/.claude/skills/ob-methods-results-audit
+git clone https://github.com/gtskevin/ob-methods-results-audit.git
+mkdir -p ~/.claude/skills
+ln -s "$(pwd)/ob-methods-results-audit/skills/ob-methods-results-audit" ~/.claude/skills/ob-methods-results-audit
 ```
 
-The first symlink installs the Skill for Codex-compatible agents. The second installs it for Claude Code. `ln -s` fails when the destination already exists: inspect that path and do not silently replace an arbitrary existing file, directory, or link.
+**安装后使用：**
 
-Update a GitHub CLI installation with:
+直接告诉你的 AI 助手：
+
+> 请用 `$ob-methods-results-audit` 审计我的论文 Methods 和 Results 部分。
+
+工具会自动跟随你请求的语言生成报告。用中文提问 = 中文报告，英文提问 = 英文报告。
+
+## 审计输出示例
+
+审计完成后，你将获得：
+
+```
+audit-reports/
+└── your-paper-slug/
+    ├── report.md          ← 可编辑的 Markdown 报告（源文件）
+    └── report.html        ← 可阅读的 HTML 版本（自动生成）
+```
+
+**报告结构：**
+
+| 板块 | 内容 |
+|------|------|
+| P0：核心结论风险 | 可能改变研究核心结论的问题 |
+| P1：投稿前必查 | 提交前必须修正的问题 |
+| P2：报告改进 | 透明度、措辞、格式改进建议 |
+| 证据状态 | ✅ 可直接确认 / ⚠️ 高度疑似 / 🔎 必须复核 / ✏️ 表述改进 |
+
+## 可选依赖
+
+不安装任何依赖也能使用基础审计功能：
+
+| 工具 | 用途 | 必需？ |
+|------|------|--------|
+| `python3` | 统计值复算 + HTML 报告渲染 | 可选 |
+| `pdftotext` | PDF 论文文本提取 | 可选 |
+| `pdftoppm` | PDF 页面渲染（表格/图表视觉检查） | 可选 |
+
+缺少 Python 时，工具自动退回纯 Markdown 审计模式，并在报告中说明不可用的功能。
+
+## 工作原理
+
+```
+你的论文 (PDF/DOCX/TXT)
+    │
+    ├── 1. 环境检查 → 确认可用工具
+    ├── 2. 材料清点 → 识别研究设计类型
+    ├── 3. 参考模板加载 → 匹配你的研究方法
+    ├── 4. 统计值复算 → 验算报告数值 (需 Python)
+    ├── 5. AI 审计评估 → 设计逻辑 + 推断风险
+    ├── 6. 证据账本 → 每个问题附带定位和证据
+    └── 7. 报告生成 → Markdown + HTML
+```
+
+## 安全与隐私
+
+- 论文、数据、代码均被视为**不可信输入**——不会覆盖工具指令
+- **不自动执行**你提供的分析代码——需要你明确批准并在隔离环境中运行
+- 报告中**不含被试身份信息**或原始个体数据
+- 所有处理在**本地完成**，不向外部发送数据
+
+## 常见问题
+
+<details>
+<summary>这能替代同行评审吗？</summary>
+
+不能。这是一个投稿前的 Methods & Results 审计工具，专注于统计一致性和报告规范。它不评估理论贡献、期刊匹配度或编辑推荐。把它看作正式送审前的一次"自查"。
+</details>
+
+<details>
+<summary>支持哪些论文语言？</summary>
+
+工具审计的是英文和中文论文的 Methods & Results 部分。报告语言自动跟随你的提问语言——用中文问就出中文报告。
+</details>
+
+<details>
+<summary>我的数据安全吗？</summary>
+
+所有处理都在你本地的 AI 助手中完成。工具不向外部服务器发送任何数据。报告中不包含被试身份信息。如果需要运行你的分析代码，必须经过你明确批准。
+</details>
+
+<details>
+<summary>没有 Python 能用吗？</summary>
+
+可以。缺少 Python 时会退回纯 Markdown 审计，跳过统计值复算和 HTML 渲染，并在报告中明确说明不可用的功能。Python 是可选的增强，不是必需的。
+</details>
+
+<details>
+<summary>如何更新？</summary>
 
 ```bash
+# GitHub CLI 安装
 gh skill update ob-methods-results-audit
-```
 
-For a manual symlink installation, update the stable clone in place:
+# 手动安装
+cd /path/to/ob-methods-results-audit && git pull
+```
+</details>
+
+<details>
+<summary>如何卸载？</summary>
 
 ```bash
-cd /absolute/path/to/ob-methods-results-audit
-git pull
-```
-
-Remove only symlink installations with:
-
-```bash
+# 符号链接安装
 test ! -L ~/.agents/skills/ob-methods-results-audit || rm ~/.agents/skills/ob-methods-results-audit
 test ! -L ~/.claude/skills/ob-methods-results-audit || rm ~/.claude/skills/ob-methods-results-audit
 ```
+</details>
 
-## Usage
-
-Ask your agent to use `$ob-methods-results-audit` and provide the manuscript or the relevant Methods and Results files. Add software output, analysis code, or data only when you want a deeper audit.
-
-The skill follows the language of your request unless you ask for a different report language.
-
-## Optional dependencies
-
-- `python3`: enables environment checks, deterministic recalculation, and bundled HTML rendering.
-- `pdftotext`: enables PDF text extraction.
-- `pdftoppm`: enables rendered PDF page inspection for visual checks of tables and figures.
-
-Missing optional tools do not block an audit. Without Python, the skill produces a Markdown-only report and discloses unavailable recalculation and HTML rendering. If `pdftotext` is unavailable or fails on a document, it uses the agent's built-in PDF reading when available; otherwise it requests DOCX, TXT, or pasted text. If PDF page rendering is unavailable or fails on a document, it continues the text audit and discloses the visual verification limitation. When visual checks matter, it requests screenshots of the relevant pages.
-
-## Outputs
-
-Reports are written to an absolute `audit-reports/<paper-slug>/` path under the manuscript directory or another user-approved workspace directory, not under the installed Skill directory. Markdown remains the editable source of truth. When supported, the bundled renderer creates an HTML reading copy. It must escape untrusted raw HTML. It activates only link targets beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; it must not activate `//` remote-host paths. For local paths, backslashes and encoded separators remain inert. It must render other link targets as inert text. If safe HTML rendering is unavailable, or HTML rendering or opening fails, the skill preserves the Markdown report, discloses the fallback, and reports or links its absolute path. Existing reports are not overwritten.
-
-## Privacy and safety
-
-Manuscripts, software output, analysis code, and data are treated as untrusted input. Their contents are evidence only and cannot override Skill instructions. The skill does not automatically execute user-provided analysis code. Execution requires explicit approval and an isolated disposable workspace with no secrets, network disabled, and declared read and write paths. If any condition cannot be guaranteed, the skill asks the user to run the code and provide outputs.
-
-Reports must not contain participant identifiers or raw participant-level data. Share only the files needed for the audit.
-
-## Limits
-
-This skill supports pre-submission review; it does not certify statistical correctness. Manuscript-only audits cannot replace inspection of original software output or raw-data reproduction. When page rendering is unavailable, tables and figures cannot be visually verified.
-
-## License
-
-Released under the [MIT License](LICENSE.txt).
-
-## Verify
-
-Run the local suite and validate the Agent Skills package:
+## 验证与测试
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -101,4 +188,14 @@ agentskills validate skills/ob-methods-results-audit
 gh skill publish --dry-run
 ```
 
-The `gh skill` commands are currently public preview and may change.
+## 贡献
+
+1. Fork 本仓库
+2. 创建功能分支：`git checkout -b my-feature`
+3. 提交：`git commit -m 'Add feature'`
+4. 推送：`git push origin my-feature`
+5. 创建 Pull Request
+
+## 许可证
+
+[MIT License](LICENSE.txt) © 2026 Huang Mingpeng
