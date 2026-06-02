@@ -54,6 +54,10 @@ Do not ask users to select technical modes unless needed.
 | Manuscript plus output, code, and data | Reproduce selected high-risk results when feasible |
 | User requests a quick screen | Report likely P0 issues and next files only |
 
+## Routing boundaries
+
+Use this Skill for a pre-submission Methods and Results audit. It can complement, but does not replace, a full manuscript peer review focused on theory, contribution, journal fit, and editorial recommendation. For dissertation evaluation or questionnaire scale translation and adaptation review, use a specialist workflow when available.
+
 ## Workflow
 
 1. Inventory artifacts and identify Studies, samples, waves, conditions, constructs, hypotheses, analyses, tables, and figures.

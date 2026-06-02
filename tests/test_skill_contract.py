@@ -194,6 +194,17 @@ class SkillContractTests(unittest.TestCase):
         self.assertIn("Markdown-only", prompt)
         self.assertNotIn("generate a Chinese HTML report", prompt)
 
+    def test_skill_and_readme_distinguish_adjacent_review_workflows(self):
+        skill = (ROOT / "SKILL.md").read_text()
+        readme = (ROOT / "README.md").read_text()
+
+        for text in (skill, readme):
+            with self.subTest(source=text[:20]):
+                self.assertIn("pre-submission Methods and Results audit", text)
+                self.assertIn("does not replace", text)
+                self.assertIn("full manuscript peer review", text)
+                self.assertIn("specialist workflow", text)
+
 
 if __name__ == "__main__":
     unittest.main()

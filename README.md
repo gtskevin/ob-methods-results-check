@@ -6,6 +6,8 @@
 
 The skill checks internal consistency, reported statistics, tables, figures, reporting completeness, and interpretation risks. It uses model judgment for design and inference questions and bundled scripts only for deterministic recalculation and report rendering.
 
+This is a pre-submission Methods and Results audit. It can complement, but does not replace, a full manuscript peer review focused on theory, contribution, journal fit, and editorial recommendation. Dissertation evaluation and questionnaire scale translation or adaptation review are also better handled by specialist workflows when available.
+
 ## Audit depth
 
 Audit depth adapts to the files you provide:
