@@ -1,6 +1,6 @@
 # Audit Rubric
 
-Use this rubric to prioritize findings, not to calculate a manuscript score.
+Use this rubric to prioritize findings, not to calculate a manuscript quality score or acceptance probability. The HTML renderer may show an audit readiness indicator for triage; treat it as a capped revision-priority signal, not as a judgment of the paper's scholarly value.
 
 ## P0: May change a core conclusion
 
@@ -30,4 +30,3 @@ Examples:
 3. Tables omit helpful but non-critical notes.
 
 For every P0 and P1 finding, name the artifact needed for confirmation and the next action.
-

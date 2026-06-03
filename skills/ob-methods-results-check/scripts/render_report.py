@@ -181,10 +181,16 @@ def _wrap_design_limitations(body):
     return pattern.sub(replace_section, body)
 
 def _calculate_health_score(p0, p1, p2):
-    score = max(0, 100 - p0 * 15 - p1 * 5 - p2 * 2)
-    if p0 > 0 or score < 70: grade = "warning" if score >= 40 else "critical"
-    elif score >= 70: grade = "good"
-    else: grade = "warning"
+    p0_penalty = 0 if p0 == 0 else min(80, 45 + (p0 - 1) * 20)
+    p1_penalty = min(24, p1 * 3)
+    p2_penalty = min(8, p2)
+    score = max(0, 100 - p0_penalty - p1_penalty - p2_penalty)
+    if score < 45 or (p0 > 0 and score < 55):
+        grade = "critical"
+    elif p0 > 0 or score < 80:
+        grade = "warning"
+    else:
+        grade = "good"
     return score, grade
 
 def _postprocess_audit(body):
@@ -221,7 +227,7 @@ def _postprocess_audit(body):
         f'<div class="health-ring {grade}" style="--ring-deg:{ring_deg:.1f}deg">'
         '<div class="health-ring-inner">'
         f'<div class="health-score">{score}</div>'
-        '<div class="health-label">\u5065\u5eb7\u8bc4\u5206</div>'
+        '<div class="health-label">\u5ba1\u8ba1\u51c6\u5907\u5ea6</div>'
         '</div></div></div>'
         '<div class="health-details">'
         '<div class="severity-bar-row">'
@@ -235,6 +241,10 @@ def _postprocess_audit(body):
         f'<div class="summary-card p1"><div class="count">{p1_count}</div><div class="label">\u8b66\u544a</div></div>'
         f'<div class="summary-card p2"><div class="count">{p2_count}</div><div class="label">\u5efa\u8bae</div></div>'
         f'<div class="summary-card total"><div class="count">{total}</div><div class="label">\u603b\u8ba1</div></div>'
+        '</div>'
+        '<div class="score-note">'
+        '\u5ba1\u8ba1\u51c6\u5907\u5ea6\u662f\u4fee\u7a3f\u4f18\u5148\u7ea7\u6307\u793a\uff0c\u4e0d\u662f\u7a3f\u4ef6\u8d28\u91cf\u6216\u5f55\u7528\u6982\u7387\u8bc4\u5206\u3002'
+        '\u8ba1\u7b97\uff1a100 - P0\u98ce\u9669\u6263\u5206 - min(24, P1\u00d73) - min(8, P2\u00d71)\u3002'
         '</div></div></div>'
     )
 

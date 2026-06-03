@@ -36,6 +36,8 @@ Use one stable evidence code for each issue, paired with a localized display lab
 - `REVIEW_REQUIRED`
 - `WORDING`
 
+If the rendered HTML shows an audit readiness score, interpret it as a visual triage aid only. It should not be described as a manuscript score, quality score, or acceptance-probability estimate.
+
 Keep the chat summary short and link the HTML report when rendered.
 
 Save the report to an absolute `audit-reports/<paper-slug>/` path under the directory containing the manuscript, or under another user-approved workspace directory. Do not write it under the installed Skill directory. Never overwrite an earlier audit.
