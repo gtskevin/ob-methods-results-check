@@ -19,6 +19,14 @@ Use:
 ## 8. [Localized audit boundaries heading]
 ```
 
+When a full manuscript was provided, state how it was used in the scope section:
+
+- Core audit evidence: Methods, Results, tables, figures, appendices, output, syntax, or code.
+- Selective context: abstract, hypotheses, model figure, construct definitions, discussion, limitations, or implications used only for consistency checks.
+- Not audited in depth: theory contribution, literature positioning, writing style, journal fit, and references unless the user requested full peer review.
+
+When a Word/DOCX document was provided, state whether DOCX text/tables were structurally extracted, whether the document was rendered to PDF/pages for visual verification, and which layout-sensitive elements could not be verified.
+
 For each P0 or P1 issue, include:
 
 1. Location.

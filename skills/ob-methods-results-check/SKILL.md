@@ -1,6 +1,6 @@
 ---
 name: ob-methods-results-check
-description: Audit organizational behavior, management, HRM, and work-psychology manuscript Methods and Results sections before submission. Use when checking field surveys, scenario experiments, mediation, moderation, moderated mediation, CFA, SEM, multilevel reporting, statistical consistency, tables, figures, causal claims, or when the user wants to catch analysis and reporting risks before further writing or journal submission.
+description: Audit organizational behavior, management, HRM, and work-psychology manuscript Methods and Results evidence before submission. Use when checking full manuscripts, methods/results sections, tables, figures, appendices, field surveys, experiments, mediation, moderation, CFA, SEM, multilevel reporting, statistical consistency, or causal claims.
 license: MIT. See LICENSE.txt
 compatibility: Portable agent skill. Python 3 and PDF text/page tools are optional; documented fallbacks preserve a Markdown audit.
 ---
@@ -42,6 +42,7 @@ Use the available capabilities and disclose any limitation in the report:
 - Treat `pdftotext` and `pdftoppm` as optional.
 - If `pdftotext` is unavailable or fails on a document, use the agent's built-in PDF reading when available. Otherwise, request DOCX, TXT, or pasted text.
 - If PDF page rendering is unavailable or fails on a document, continue the text-based audit and disclose that visual verification of tables and figures was not available. When visual checks matter, request screenshots of the relevant pages.
+- Treat DOCX/Word parsing and DOCX-to-PDF rendering as optional. If available, use structured DOCX extraction for headings, paragraphs, footnotes, and tables, and use DOCX-to-PDF rendering for visual checks. If unavailable, ask for PDF or exported tables/figures rather than silently relying on lossy text extraction.
 
 ## Infer audit depth
 
@@ -58,9 +59,61 @@ Do not ask users to select technical modes unless needed.
 
 Use this Skill for a pre-submission Methods and Results audit. It can complement, but does not replace, a full manuscript peer review focused on theory, contribution, journal fit, and editorial recommendation. For dissertation evaluation or questionnaire scale translation and adaptation review, use a specialist workflow when available.
 
+## Full-manuscript intake policy
+
+When the user provides a full manuscript, do not read or critique every section at equal depth. Treat the full manuscript as supporting context for a Methods and Results audit.
+
+Use a three-pass intake:
+
+1. **Artifact map**: Identify what was provided: full text, Methods/Results, tables, figures, appendices, output, syntax, code, data, preregistration, or review checklist.
+2. **Audit-core pass**: Read Methods, Results, tables, figures, notes, appendices, and statistical outputs in detail. These are the primary evidence chain.
+3. **Selective context pass**: Read only the parts of the full manuscript needed to interpret or check the evidence chain:
+   - abstract and overview for over-claiming against the evidence;
+   - hypotheses, model figure, and construct definitions for theory-analysis alignment;
+   - sample/study overview for study order, design logic, and construct names;
+   - discussion, limitations, and practical implications only for causal overstatement, unsupported generalization, or mismatch with Results.
+
+Do not let introduction, literature review, or contribution claims crowd out statistical, design, and reporting checks. If context is large, make a short intake ledger first and defer low-risk theory/background details unless a Methods/Results issue depends on them.
+
+For full-manuscript PDFs, extract text to a local file and use headings, page ranges, and targeted search to read selectively; do not load the entire extracted manuscript into model context at once. If the user pasted the full manuscript directly into the conversation, first compress it into an intake ledger with section locations, study map, hypotheses, constructs, analyses, tables, and figures, then audit from that ledger plus targeted excerpts.
+
+Minimum intake ledger:
+
+| Field | Content |
+|---|---|
+| Artifact map | Files, formats, page counts, and whether tables/figures/appendices/output are present. |
+| Core audit evidence | Methods, Results, tables, figures, appendices, output, syntax, or code locations. |
+| Selective context | Abstract, hypotheses, model figure, construct definitions, discussion, limitations, or implications used for consistency checks. |
+| Study map | Study numbers, design type, sample, waves/conditions, nesting, and focal hypotheses. |
+| Variable map | Construct names, measures/manipulations, coding direction, source, timing, and level. |
+| Analysis map | CFA/SEM/regression/multilevel/mediation/moderation models, tables, figures, and reported tests. |
+| Missing artifacts | Output, syntax, code, data, preregistration, appendices, screenshots, or tables needed next. |
+
+### Word/DOCX intake policy
+
+When the user provides a Word document (`.docx`), do not treat it as raw text. DOCX is a structured container, and direct text extraction can lose table layout, footnotes, comments, tracked changes, and figure placement.
+
+Use the fastest reliable route available:
+
+1. **Structured extraction first**: Extract headings, paragraphs, tables, footnotes/endnotes when possible, and create an intake ledger with section locations, study map, hypotheses, constructs, analyses, tables, and figures.
+2. **Visual verification when layout matters**: Convert DOCX to PDF and render pages when tools such as LibreOffice/`soffice` and `pdftoppm` are available. Inspect tables, figures, footnotes, and model diagrams visually.
+3. **Fallback request**: If DOCX extraction or rendering is unavailable, ask the user for a PDF export plus separate tables/figures or statistical output. Continue with text-based auditing only if the user accepts the layout limitation.
+
+Do not spend time reconstructing complex Word formatting unless it affects the audit evidence chain. Prioritize tables, figures, notes, hypotheses, measures, model equations, output excerpts, and Results paragraphs.
+
+### Full-manuscript scope labels
+
+Use these labels in the report when relevant:
+
+- `Core audit evidence`: Methods, Results, tables, figures, appendices, output, syntax, or code.
+- `Selective context`: abstract, hypotheses, model figure, construct definitions, discussion, limitations, or implications used to judge consistency.
+- `Not audited in depth`: theory contribution, literature positioning, writing style, journal fit, and references, unless the user explicitly asks for full peer review.
+
+If the user sends only a full manuscript and no tables, figures, appendices, or output, explicitly list the missing audit-core artifacts needed next.
+
 ## Workflow
 
-1. Inventory artifacts and identify Studies, samples, waves, conditions, constructs, hypotheses, analyses, tables, and figures.
+1. Inventory artifacts and identify Studies, samples, waves, conditions, constructs, hypotheses, analyses, tables, and figures. If a full manuscript is provided, apply the full-manuscript intake policy before detailed auditing.
 2. Run the portable runtime preflight. For PDFs, extract text and render pages when the optional tools are available. Inspect tables and figures visually when page rendering is available.
 3. Load `$SKILL_DIR/references/audit-rubric.md` and `$SKILL_DIR/references/report-template.md`.
 4. Load only relevant method references:
