@@ -8,8 +8,8 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 REPO_URL = 'https://github.com/gtskevin/ob-methods-results-check'
-VERSION_URL = ('https://raw.githubusercontent.com/gtskevin/ob-methods-results-check/'
-               'main/skills/ob-methods-results-check/VERSION')
+VERSION_URL = ('https://api.github.com/repos/gtskevin/ob-methods-results-check/'
+               'contents/skills/ob-methods-results-check/VERSION?ref=main')
 VERSION_FILE = Path(__file__).resolve().parents[1] / 'VERSION'
 
 
@@ -32,7 +32,7 @@ def check_update(version_file=VERSION_FILE):
     try:
         request = Request(VERSION_URL, headers={
             'User-Agent': 'ob-methods-results-check-update-check',
-            'Accept': 'text/plain', 'Cache-Control': 'no-cache',
+            'Accept': 'application/vnd.github.raw+json', 'Cache-Control': 'no-cache',
         })
         with urlopen(request, timeout=3) as response:
             data = response.read(129)
