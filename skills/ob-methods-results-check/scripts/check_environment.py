@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import argparse
 import json
+from pathlib import Path
+import subprocess
 import shutil
 import sys
 
@@ -56,8 +59,32 @@ def build_report():
     }
 
 
+def check_release():
+    # A process deadline also bounds slow DNS and stalled response bodies.
+    try:
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve().with_name("check_updates.py"))],
+            capture_output=True, text=True, timeout=5, check=True,
+        )
+        report = json.loads(result.stdout)
+        if not isinstance(report, dict) or report.get("status") not in {
+            "up_to_date", "update_available", "local_ahead", "unavailable", "skipped"
+        }:
+            raise ValueError("Invalid update report")
+        return report
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return {"status": "unavailable", "reason": "checker_failed_or_timed_out"}
+
+
 def main():
-    print(json.dumps(build_report(), indent=2, ensure_ascii=False))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check-updates", action="store_true",
+                        help="Read-only GitHub release check; bounded and non-blocking on failure")
+    args = parser.parse_args()
+    report = build_report()
+    if args.check_updates:
+        report["update_check"] = check_release()
+    print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
 

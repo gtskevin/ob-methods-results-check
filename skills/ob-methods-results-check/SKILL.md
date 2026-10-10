@@ -31,11 +31,21 @@ Before auditing, check the runtime:
 2. Only when Python is available, run:
 
 ```bash
-python3 "$SKILL_DIR/scripts/check_environment.py"
+python3 "$SKILL_DIR/scripts/check_environment.py" --check-updates
 ```
 
 3. If Python is unavailable, continue with a Markdown-only audit. Disclose that deterministic recalculation and HTML rendering were unavailable.
 4. If Python or a bundled helper command fails, preserve the audit, disclose the failure, and continue with manual evidence review where feasible.
+
+Run this update check once per Skill invocation, not once per study or file. Inspect `update_check`:
+
+- `update_available`: briefly tell the user in their language that version X is installed and version Y is available; link https://github.com/gtskevin/ob-methods-results-check and offer to update through their original installation method. Continue the requested audit with the installed version. Do not overwrite files or update without user authorization.
+- `up_to_date` or `local_ahead`: no update notice. A local-ahead/development version is not a downgrade request.
+- `unavailable` or missing Python: continue auditing; briefly say the update check could not be completed, never claim the skill is current. Do not retry repeatedly or ask the user to troubleshoot before auditing.
+- `skipped`: respect the user's offline/disabled preference; no reminder. When the user prohibits network access, skip the update check and run preflight without `--check-updates`.
+
+The helper reads only the public release VERSION, sends no paper content or credentials, and preflight limits the check to five seconds. Users can disable it with `OB_METHODS_SKIP_UPDATE_CHECK=1`. It never installs anything. Read [references/updating.md](references/updating.md) only when an update is available, the user asks about updates, or maintaining a release.
+
 
 Use the available capabilities and disclose any limitation in the report:
 
