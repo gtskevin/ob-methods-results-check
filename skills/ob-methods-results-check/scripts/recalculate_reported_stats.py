@@ -17,8 +17,26 @@ def integer_positive(value, name):
     return value
 
 
+ASSUMPTIONS = {
+    "proportion": "Count and total refer to the same sample and denominator.",
+    "weighted-mean": "Groups are disjoint and exhaustive, and means use the same scale.",
+    "pooled-t": "Independent groups, equal variances, sample SDs; Student pooled t, not Welch or paired t.",
+    "f-from-r2": "Ordinary least squares with intercept; overall model F and unadjusted R-squared, same sample and predictors; not robust or multilevel F.",
+    "r2-from-f": "Ordinary least squares with intercept; overall model F and unadjusted R-squared, same sample and predictors; not robust or multilevel F.",
+    "vif-from-r": "Exactly two predictors; pairwise r gives VIF only in this special case. General VIF requires R-squared from regressing one predictor on all others.",
+    "mediation-product": "Fixed linear paths from the same model, sample and coefficient scale. Random-slope mediation may also require slope covariance.",
+    "first-stage-moderated-mediation": "Fixed linear first-stage interaction; constant second-stage b; all coefficients and probes use the fitted model scale. Random slopes may require covariance terms.",
+    "cfa-df": "Conventional identified covariance-only CFA: simple structure, correlated factors, no cross-loadings or correlated errors; parameter count is a screening calculation.",
+}
+
+
 def output(command, inputs, result):
-    print(json.dumps({"command": command, "inputs": inputs, "result": result}, indent=2))
+    assumptions = ASSUMPTIONS[command]
+    if command == "first-stage-moderated-mediation" and inputs.get("moderator_sd") is not None:
+        assumptions += " SD mode uses probes at -SD and +SD around model zero; these equal mean +/- SD only when centered at that mean."
+    print(json.dumps({"command": command, "inputs": inputs, "result": result,
+                      "assumptions": assumptions,
+                      "limitations": "Conditional arithmetic check only; does not verify model applicability, p-values, confidence intervals or hypothesis support. Rounded inputs can differ from full-precision output."}, indent=2, allow_nan=False))
 
 
 def build_parser():
@@ -55,11 +73,17 @@ def build_parser():
     p.add_argument("--a", type=float, required=True)
     p.add_argument("--b", type=float, required=True)
 
+    for name in ("a-decimals", "b-decimals", "reported-decimals"):
+        p.add_argument(f"--{name}", type=int)
+    p.add_argument("--reported", type=float)
+
     p = subs.add_parser("first-stage-moderated-mediation")
     p.add_argument("--a", type=float, required=True)
     p.add_argument("--interaction", type=float, required=True)
     p.add_argument("--b", type=float, required=True)
-    p.add_argument("--moderator-sd", type=float, required=True)
+    p.add_argument("--moderator-sd", type=float, help="Compatibility mode: probes at +/- SD around model zero")
+    p.add_argument("--moderator-low", type=float, help="Actual low probe on fitted model scale")
+    p.add_argument("--moderator-high", type=float, help="Actual high probe on fitted model scale")
 
     p = subs.add_parser("cfa-df")
     p.add_argument("--indicators", type=int, required=True)
@@ -72,8 +96,14 @@ def calculate(args):
     inputs = vars(args).copy()
     command = inputs.pop("command")
 
+    for name, value in inputs.items():
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+
     if command == "proportion":
         positive(args.total, "total")
+        if not 0 <= args.count <= args.total:
+            raise ValueError("count must be between zero and total")
         result = {"proportion": args.count / args.total, "percentage": args.count / args.total * 100}
 
     elif command == "weighted-mean":
@@ -84,6 +114,8 @@ def calculate(args):
                 count, mean = float(count_raw), float(mean_raw)
             except ValueError as exc:
                 raise ValueError("each group must use COUNT:MEAN") from exc
+            if not math.isfinite(count) or not math.isfinite(mean):
+                raise ValueError("group count and mean must be finite")
             positive(count, "group count")
             groups.append({"count": count, "mean": mean})
         total = sum(group["count"] for group in groups)
@@ -96,8 +128,8 @@ def calculate(args):
     elif command == "pooled-t":
         integer_positive(args.n1, "n1")
         integer_positive(args.n2, "n2")
-        if args.n1 + args.n2 <= 2:
-            raise ValueError("n1 + n2 must be greater than two")
+        if args.n1 < 2 or args.n2 < 2:
+            raise ValueError("each group must have at least two observations")
         if args.sd1 < 0 or args.sd2 < 0:
             raise ValueError("standard deviations must be non-negative")
         pooled_variance = ((args.n1 - 1) * args.sd1 ** 2 + (args.n2 - 1) * args.sd2 ** 2) / (
@@ -138,12 +170,38 @@ def calculate(args):
 
     elif command == "mediation-product":
         result = {"indirect_effect": args.a * args.b}
+        rounding = (args.a_decimals, args.b_decimals, args.reported, args.reported_decimals)
+        if any(v is not None for v in rounding):
+            if any(v is None for v in rounding):
+                raise ValueError("rounding check needs a-decimals, b-decimals, reported and reported-decimals")
+            for d in (args.a_decimals, args.b_decimals, args.reported_decimals):
+                if not 0 <= d <= 15:
+                    raise ValueError("decimal places must be between 0 and 15")
+            a_half, b_half, r_half = (0.5 * 10 ** (-d) for d in (args.a_decimals, args.b_decimals, args.reported_decimals))
+            products = [(args.a + x * a_half) * (args.b + y * b_half) for x in (-1, 1) for y in (-1, 1)]
+            lo, hi = min(products), max(products)
+            rlo, rhi = args.reported - r_half, args.reported + r_half
+            result.update(product_interval=[lo, hi], reported_interval=[rlo, rhi],
+                          rounding_compatible=max(lo, rlo) <= min(hi, rhi),
+                          rounding_note="Conservative closed intervals assuming rounding to nearest at stated decimal places; overlap is compatibility, not model validation.")
 
     elif command == "first-stage-moderated-mediation":
-        positive(args.moderator_sd, "moderator-sd")
-        high_slope = args.a + args.interaction * args.moderator_sd
-        low_slope = args.a - args.interaction * args.moderator_sd
+        if args.moderator_sd is not None:
+            if args.moderator_low is not None or args.moderator_high is not None:
+                raise ValueError("choose moderator-sd OR both actual probes")
+            positive(args.moderator_sd, "moderator-sd")
+            low, high = -args.moderator_sd, args.moderator_sd
+        else:
+            low, high = args.moderator_low, args.moderator_high
+            if low is None or high is None:
+                raise ValueError("provide both moderator-low and moderator-high, or moderator-sd")
+            if low >= high:
+                raise ValueError("moderator-low must be less than moderator-high")
+        high_slope = args.a + args.interaction * high
+        low_slope = args.a + args.interaction * low
         result = {
+            "moderator_low": low,
+            "moderator_high": high,
             "high_slope": high_slope,
             "low_slope": low_slope,
             "high_indirect_effect": high_slope * args.b,

@@ -1,6 +1,6 @@
 # Audit Rubric
 
-Use this rubric to prioritize findings, not to calculate a manuscript quality score or acceptance probability. The HTML renderer may show an audit readiness indicator for triage; treat it as a capped revision-priority signal, not as a judgment of the paper's scholarly value.
+Use this rubric to prioritize findings, not to calculate a manuscript quality score or acceptance probability. HTML must preserve the evidence and limitations stated in Markdown; do not generate a readiness score from issue counts.
 
 ## P0: May change a core conclusion
 
@@ -17,7 +17,7 @@ Examples:
 Examples:
 
 1. Missing clustering treatment, centering rationale, attrition detail, or exclusion rules.
-2. Confidence intervals, effect sizes, power analysis, preregistration, or missing-data handling are incomplete.
+2. Relevant confidence intervals, effect sizes, sample-size rationale, preregistration status/deviations, or missing-data handling are incomplete. Do not impose preregistration or post-hoc observed power as universal requirements.
 3. Causal claims exceed the design.
 4. A result is plausible but cannot be reconstructed from the manuscript.
 
@@ -30,3 +30,5 @@ Examples:
 3. Tables omit helpful but non-critical notes.
 
 For every P0 and P1 finding, name the artifact needed for confirmation and the next action.
+
+Severity follows the consequence for the claim, not the method name or checklist count. Unsupported contrasts, wrong levels or unidentified causal mechanisms can be P0 when central. Keep evidence status independent: absent output may warrant REVIEW_REQUIRED, while a demonstrated inferential error can be CONFIRMED without raw-data reproduction. Distinguish journal reporting requirements, statistical principles, conditional advice and optional enhancements.

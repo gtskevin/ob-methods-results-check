@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-check"
 ENV_SCRIPT = SKILL_ROOT / "scripts" / "check_environment.py"
 RENDER_SCRIPT = SKILL_ROOT / "scripts" / "render_report.py"
 STATS_SCRIPT = SKILL_ROOT / "scripts" / "recalculate_reported_stats.py"

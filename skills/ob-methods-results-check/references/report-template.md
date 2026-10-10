@@ -25,13 +25,23 @@ When a full manuscript was provided, state how it was used in the scope section:
 - Selective context: abstract, hypotheses, model figure, construct definitions, discussion, limitations, or implications used only for consistency checks.
 - Not audited in depth: theory contribution, literature positioning, writing style, journal fit, and references unless the user requested full peer review.
 
-When a Word/DOCX document was provided, state whether DOCX text/tables were structurally extracted, whether the document was rendered to PDF/pages for visual verification, and which layout-sensitive elements could not be verified.
+Record the canonical path, audit date, hash or reproducible snapshot identifier, and version alignment of companion artifacts.
+
+When a Word/DOCX document was provided, state the final/original/marked-up revision view and how deleted/inserted text was handled, then state whether DOCX text/tables were structurally extracted, whether the document was rendered to PDF/pages for visual verification, and which layout-sensitive elements could not be verified.
+
+Include a compact hypothesis evidence table in the assessment/scope section for the focal claims (localize headers):
+
+| Hypothesis / claim | Target effect and level | Actual model / test | Estimate, CI and source | Supported interpretation | Issue / next artifact |
+|---|---|---|---|---|---|
+| W strengthens X→Y | Interaction or slope difference | Only two simple slopes reported | p=.03 and .12; Table X | Difference not yet established | Request interaction/contrast output |
+
+Record unreported estimates as missing; do not invent them. For a narrowly scoped audit include only relevant claims. “No issue found within available evidence” is not statistical certification. Separate evidence status from severity; explain whether repair needs reporting, reanalysis, new evidence or narrower claims. Identify target-journal requirements separately from general methodological problems, with a dated source.
 
 For each P0 or P1 issue, include:
 
-1. Location.
+1. Searchable location: canonical file/version, section, table/figure and row/column where applicable, plus a short quote. Label paragraph IDs explicitly; page numbers require a verified rendered version.
 2. Current claim.
-3. Evidence or recalculation.
+3. Evidence or recalculation, including source/output version, model applicability, coefficient scale, probe values and rounding precision when relevant.
 4. Why it matters.
 5. Stable evidence code and localized display label.
 6. Artifact needed next.
@@ -44,7 +54,7 @@ Use one stable evidence code for each issue, paired with a localized display lab
 - `REVIEW_REQUIRED`
 - `WORDING`
 
-If the rendered HTML shows an audit readiness score, interpret it as a visual triage aid only. It should not be described as a manuscript score, quality score, or acceptance-probability estimate.
+HTML is a faithful presentation of the Markdown evidence ledger. Do not infer scores, finding counts, evidence status, or resolution from heading patterns or keyword matches. If a summary count is useful, write and verify it explicitly in Markdown. A finding is resolved only after evidence is rechecked, not after ticking a browser checkbox.
 
 Keep the chat summary short and link the HTML report when rendered.
 

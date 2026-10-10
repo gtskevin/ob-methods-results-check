@@ -8,7 +8,7 @@ from pathlib import Path
 SCRIPT = (
     Path(__file__).parents[1]
     / "skills"
-    / "ob-methods-results-audit"
+    / "ob-methods-results-check"
     / "scripts"
     / "recalculate_reported_stats.py"
 )

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).parents[1]
-SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-check"
 SCRIPT = SKILL_ROOT / "scripts" / "render_report.py"
 FIXTURE = ROOT / "tests" / "fixtures" / "sample-report.md"
 SPEC = importlib.util.spec_from_file_location("render_report", SCRIPT)
@@ -28,7 +28,7 @@ class RenderReportTests(unittest.TestCase):
         rendered = MODULE.render_markdown(FIXTURE.read_text(encoding="utf-8"))
 
         self.assertIn("<h1>Audit &lt;Draft&gt;</h1>", rendered)
-        self.assertIn("<h2>Findings</h2>", rendered)
+        self.assertIn('<h2 id="findings">Findings</h2>', rendered)
         self.assertIn("<ol><li>First issue</li><li>Second issue</li></ol>", rendered)
         self.assertIn("<ul><li><code>P0</code>: core conclusion</li>", rendered)
         self.assertIn("<table>", rendered)
@@ -232,7 +232,8 @@ class RenderReportTests(unittest.TestCase):
                 MODULE.webbrowser,
                 "open",
                 side_effect=RuntimeError("no browser"),
-            ):
+            ), patch("subprocess.Popen"):
+
                 result = MODULE.write_html(
                     FIXTURE,
                     output,

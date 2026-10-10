@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-SKILL_ROOT = ROOT / "skills" / "ob-methods-results-audit"
+SKILL_ROOT = ROOT / "skills" / "ob-methods-results-check"
 
 
 class SkillContractTests(unittest.TestCase):
@@ -51,7 +51,7 @@ class SkillContractTests(unittest.TestCase):
 
         for text in (skill, template):
             with self.subTest(source=text[:20]):
-                self.assertIn('SKILL_DIR="/absolute/path/to/ob-methods-results-audit"', text)
+                self.assertIn('SKILL_DIR="/absolute/path/to/ob-methods-results-check"', text)
                 self.assertIn("substitute that absolute path directly", text)
 
     def test_skill_gates_recalculation_and_recovers_from_helper_failure(self):
@@ -158,9 +158,9 @@ class SkillContractTests(unittest.TestCase):
         license_text = license_path.read_text()
 
         for expected in (
-            "~/.agents/skills/ob-methods-results-audit",
-            "~/.claude/skills/ob-methods-results-audit",
-            "gh skill install gtskevin/ob-methods-results-audit",
+            "~/.agents/skills/ob-methods-results-check",
+            "~/.claude/skills/ob-methods-results-check",
+            "gh skill install gtskevin/ob-methods-results-check",
             "pdftotext",
             "pdftoppm",
             "Markdown-only",

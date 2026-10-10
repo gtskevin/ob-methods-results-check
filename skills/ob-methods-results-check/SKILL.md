@@ -89,9 +89,17 @@ Minimum intake ledger:
 | Analysis map | CFA/SEM/regression/multilevel/mediation/moderation models, tables, figures, and reported tests. |
 | Missing artifacts | Output, syntax, code, data, preregistration, appendices, screenshots, or tables needed next. |
 
+### Canonical version and evidence alignment
+
+Use the user's designated current file as canonical; do not select a version merely because its filename says “final” or its modification time is newest. Record its absolute path, audit date, and a hash or other reproducible snapshot identifier. Map each table, figure, supplement and output to its manuscript version, study, sample and model. If alignment is unknown, record it as unresolved and continue checks that do not depend on it; do not silently combine versions.
+
+Use searchable locations: section + table/figure/panel or row/column + a short exact quote. Label extracted paragraph IDs as paragraph IDs (for example, “extracted paragraph 128”), never as page numbers. Give a page number only when verified against a specific rendered version.
+
 ### Word/DOCX intake policy
 
 When the user provides a Word document (`.docx`), do not treat it as raw text. DOCX is a structured container, and direct text extraction can lose table layout, footnotes, comments, tracked changes, and figure placement.
+
+Before extracting numbers, establish the revision view. Default to the current/final view (insertions included; deletions excluded), unless the user requests an original or marked-up comparison; state the chosen view. Never concatenate deleted and inserted text (for example, deleted 220 plus inserted 387 is not N = 220387). Check revisions inside tables and moved text too. Preserve the source DOCX; any accepted-changes or rendered copy must be separate. If the extractor cannot reliably resolve revisions, verify the affected claim in a rendered final view or clean export and mark it REVIEW_REQUIRED until then. A marked-up PDF is not evidence of the final view. Calling a table “current” does not verify it: check its affected cells in a reliably extracted or rendered final view before treating those values as confirmed evidence.
 
 Use the fastest reliable route available:
 
@@ -116,14 +124,20 @@ If the user sends only a full manuscript and no tables, figures, appendices, or 
 1. Inventory artifacts and identify Studies, samples, waves, conditions, constructs, hypotheses, analyses, tables, and figures. If a full manuscript is provided, apply the full-manuscript intake policy before detailed auditing.
 2. Run the portable runtime preflight. For PDFs, extract text and render pages when the optional tools are available. Inspect tables and figures visually when page rendering is available.
 3. Load `$SKILL_DIR/references/audit-rubric.md` and `$SKILL_DIR/references/report-template.md`.
-4. Load only relevant method references:
+4. Map each focal hypothesis to its target effect (difference, association, change, indirect effect, interaction, or causal effect), measurement, unit of analysis, and actual test. Use the hypothesis evidence table in the report template; a significant coefficient is not automatically the test of the hypothesis. Load only relevant method references:
    - Field surveys: `$SKILL_DIR/references/survey-design.md`
    - Experiments: `$SKILL_DIR/references/experiment-design.md`
    - Mediation, moderation, or moderated mediation: `$SKILL_DIR/references/mediation-moderation.md`
+   - Multi-item measures, reliability, or group/time measurement comparisons: `$SKILL_DIR/references/measurement-quality.md`
+   - Regression or choice between observed-score paths and latent SEM: `$SKILL_DIR/references/regression-path.md`
    - CFA or SEM: `$SKILL_DIR/references/sem-cfa.md`
    - Nested data or aggregation: `$SKILL_DIR/references/multilevel.md`
-   - Reporting completeness: `$SKILL_DIR/references/reporting-transparency.md`
-5. Only when Python is available, recalculate reported quantities when enough values are present. Use:
+   - Repeated waves, lagged effects, or growth: `$SKILL_DIR/references/longitudinal.md`
+   - Results interpretation and reporting completeness: `$SKILL_DIR/references/reporting-transparency.md`
+   - Target-journal methods requirements, or contested norms: `$SKILL_DIR/references/journal-standards.md`
+
+   These routes are conditional, not a requirement to perform every analysis. For binary/count outcomes, nonlinear/congruence models, quasi-experiments or other specialized methods, identify the target effect and consult appropriate primary methodological/software sources before judging adequacy. Do not apply OLS or conventional CFA rules outside their scope. Preserve the user's audit scope; propose additional analyses only for a specific threat to a claim.
+5. Read `$SKILL_DIR/references/recalculation-boundaries.md` before choosing a formula. Only when Python is available, recalculate reported quantities when enough values are present. Use:
 
 ```bash
 python3 "$SKILL_DIR/scripts/recalculate_reported_stats.py" --help
@@ -157,7 +171,7 @@ Use:
 
 Use stable internal evidence codes with a localized display label:
 
-- `CONFIRMED`: manuscript-internal evidence proves the inconsistency.
+- `CONFIRMED`: version-aligned evidence proves the inconsistency in the stated revision view. For numerical claims, establish formula applicability and rule out reported rounding before assigning this code. A conditional calculator result alone is insufficient.
 - `LIKELY`: strong risk signal; inspect original output.
 - `REVIEW_REQUIRED`: important question requiring data, code, or software output.
 - `WORDING`: interpretation or reporting should be tightened.
