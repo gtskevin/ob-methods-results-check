@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="assets/banner.svg" alt="OB Methods Results Audit — 组织行为学论文 Methods & Results 投稿前智能审计" width="800">
+<img src="assets/banner.svg" alt="OB Methods Results Check — 组织行为学论文 Methods & Results 投稿前智能审计" width="800">
 
 <br/>
 
@@ -111,37 +111,13 @@ Mplus 输出：/path/to/model.out
 文件：/path/to/manuscript.pdf
 ```
 
-## 报告预览
+## 报告阅读方式
 
-审计生成一份交互式 HTML 报告，打开即知论文健康状况：
+报告前部默认显示 **P0、P1、P2 和合计四张统计卡片**，随后列出带稳定编号的问题索引，以及逐项位置、证据、判断、所需材料和修复建议。统计来自报告中明确填写并核对的条目，不从标题或关键词猜测；同一问题涉及多个数值也只计一项。
 
-<table>
-<tr>
-<td width="50%"><img src="assets/report-overview.png" alt="报告全局视图 — 健康评分仪表盘 + 严重程度分布" width="100%"></td>
-<td width="50%"><img src="assets/report-p0-detail.png" alt="P0 问题详情 — 证据对比 + 修复建议" width="100%"></td>
-</tr>
-<tr>
-<td align="center"><b>健康评分仪表盘</b><br/>打开即知论文状况，P0/P1/P2 分布一目了然</td>
-<td align="center"><b>P0 问题详情</b><br/>结构化证据面板：位置、证据对比、修复操作</td>
-</tr>
-<tr>
-<td width="50%"><img src="assets/report-filter-cards.png" alt="筛选栏 + 发现卡片" width="100%"></td>
-<td width="50%"><img src="assets/report-side-view.png" alt="侧边目录 + 卡片视图" width="100%"></td>
-</tr>
-<tr>
-<td align="center"><b>筛选与追踪</b><br/>按严重程度筛选、标记已修复、追踪修复进度</td>
-<td align="center"><b>目录导航</b><br/>侧边栏显示各级问题数量，快速跳转</td>
-</tr>
-</table>
+数量只描述问题范围与严重性，不是论文健康分或投稿就绪评分。证据是否充分、问题是否解决，必须查看具体证据并重新核查。报告保留可编辑 Markdown，并在 Python 可用时生成 HTML；无 Python 时仍在 Markdown 中显示统计表。
 
-**报告交互功能：**
-- 🔴 **健康评分环** — 加权计算，0-100 分直观感知论文健康度
-- 🎛️ **严重程度筛选** — 一键过滤 P0/P1/P2，聚焦最关键问题
-- 📋 **折叠/展开卡片** — 默认只看摘要，按需展开完整证据
-- ✅ **修复进度追踪** — 标记已修复项，进度条实时更新（localStorage 持久化）
-- 📊 **条件格式化表格** — 数值差异自动高亮，不用心算
-- 🌙 **暗色模式** — 自动适配系统偏好
-- 🖨️ **打印优化** — 专为纸面阅读设计的分页和排版
+支持响应式阅读、目录导航、暗色模式和打印。旧截图展示的是历史界面，不代表当前功能；当前版不根据浏览器勾选认定问题已修复。
 
 ## 审计输出
 
@@ -159,7 +135,7 @@ audit-reports/
 | 分级 | 含义 |
 |------|------|
 | **P0：核心结论风险** | 可能改变核心结论的问题 |
-| **P1：投稿前必须修复** | 提交期刊前需要解决的问题 |
+| **P1：投稿前必须核查** | 提交期刊前需要解决的问题 |
 | **P2：报告改进建议** | 透明性、措辞和格式优化建议 |
 
 **证据状态标签：**
@@ -271,3 +247,22 @@ test ! -L ~/.claude/skills/ob-methods-results-check || rm ~/.claude/skills/ob-me
 ## 许可证
 
 [MIT License](LICENSE.txt) © 2026 gtskevin
+
+## 安装、更新与使用边界
+
+先让支持本地 Skills 的 Agent 从本仓库安装完整的 `skills/ob-methods-results-check/` 目录，包含 `SKILL.md`、`references/`、`scripts/` 和 `VERSION`，不能只复制入口文件。Codex 可使用 `~/.agents/skills/ob-methods-results-check`，Claude Code 可使用 `~/.claude/skills/ob-methods-results-check`；其他 Agent 请由其安装工具确认发现目录。安装后新开会话，确认能读取 Skill 和版本。
+
+手动安装应将仓库放在长期保留的目录（stable clone），然后将 Skill 目录链接至 Agent 的 Skills 目录。不要链接临时下载目录。目标存在时先检查来源和本地修改，do not silently replace 已有 Skill。更新前先查看 `git status`，确认无冲突的本地自定义，再使用适当的 `git pull --ff-only`；安装器管理的副本使用原安装器更新。`mkdir -p` 只能创建父目录，不应覆盖原安装。卸载时先检查 `test ! -L` 是否成立，区分普通目录和符号链接，只移除明确识别的 Skill 入口。
+
+将论文主文和补充材料同时提供，并说明目标期刊、重点及当前权威版本。原始统计输出可以进一步核对结果；提供数据和代码也不等于授权执行作者代码，执行需单独明确授权和隔离环境。
+
+<details>
+<summary>Portable runtime and safety contract for agent installers</summary>
+
+This is a pre-submission Methods and Results audit; it does not replace full manuscript peer review or a specialist workflow for dissertation or scale review. Keep an editable Markdown source at an absolute path under the manuscript directory or an approved workspace, not under the installed Skill.
+
+Python is optional; without it, continue a Markdown-only audit. If PDF extraction is unavailable or fails, use built-in PDF reading or request DOCX, TXT, or pasted text. If rendering is unavailable or fails, disclose the visual limitation and request screenshots of the relevant pages.
+
+The bundled HTML renderer escapes untrusted raw HTML. It activates only links beginning with `http://`, `https://`, `#`, a single `/`, `./`, or `../`; it rejects `//` remote-host paths, local backslashes and encoded separators, and must render other link targets as inert text. Optional external-renderer integration preserves trusted, freshly generated HTML and is not a sanitizer.
+
+</details>

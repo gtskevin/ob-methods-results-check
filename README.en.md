@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="assets/banner.svg" alt="OB Methods Results Audit — Pre-submission audit for OB manuscript Methods &amp; Results" width="800">
+<img src="assets/banner.svg" alt="OB Methods Results Check — Pre-submission audit for OB manuscript Methods &amp; Results" width="800">
 
 <br/>
 
@@ -140,10 +140,11 @@ audit-reports/
 | ✏️ WORDING | Interpretation or reporting should be tightened |
 
 **HTML report features:**
-- Audit summary dashboard — P0/P1/P2 counts at a glance
-- Finding cards — severity pills, evidence status badges, scroll animations
-- Actionable vs. design-limitation separation — fixable issues highlighted; structural limitations collapsed
-- Warm editorial design — paper-toned palette, responsive layout, dark mode, print styles
+- Four front-of-report cards: explicit P0, P1, P2 and total counts, including zeros.
+- A stable issue-ID index followed by evidence, locations and repair actions.
+- Responsive layout, navigation, dark mode and print styles.
+
+Counts describe distinct findings and severity, not manuscript health or submission readiness. Repeated mentions and multiple affected cells do not add findings. Resolution requires evidence rechecking, not a browser checkbox. Historical screenshots may differ from the current renderer.
 
 ## How it works
 
@@ -245,3 +246,11 @@ test ! -L ~/.claude/skills/ob-methods-results-check || rm ~/.claude/skills/ob-me
 ## License
 
 [MIT License](LICENSE.txt) © 2026 gtskevin
+
+## Installation and updates
+
+Install the complete `skills/ob-methods-results-check/` folder, including references, scripts and VERSION. Ask your agent to confirm its supported discovery path; Codex can use `~/.agents/skills/ob-methods-results-check`, and Claude Code can use `~/.claude/skills/ob-methods-results-check`. Start a new session after installation.
+
+For a manual installation, use a stable clone and link the Skill folder to the agent's discovery directory. Inspect an existing target and local customizations first; do not silently replace them. Inspect `git status` before a fast-forward update with `git pull --ff-only`, or use the original installer for installer-managed copies. Removing a Skill requires distinguishing a symlink from an ordinary folder first.
+
+This pre-submission Methods and Results audit does not replace full manuscript peer review. Provide the manuscript and supplements, target journal, designated version and any original outputs. Author code is not executed without separate authorization and isolation.

@@ -68,10 +68,67 @@ def split_table_row(line): return [c.strip() for c in line.strip().strip("|").sp
 def is_table_separator(line):
     cells = split_table_row(line); return bool(cells) and all(TABLE_SEPARATOR.fullmatch(c) for c in cells)
 
+DASHBOARD_CSS = """
+.audit-dashboard {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px 0;}
+.audit-dashboard .audit-metric {padding:20px;border:1px solid #d8dbe0;border-top:4px solid var(--metric-accent);border-radius:10px;background:var(--bg-card,#fff);}
+.audit-dashboard .audit-metric-label {font-size:14px;font-weight:600;color:var(--text-secondary,#555);}
+.audit-dashboard .audit-metric-count {display:block;font-size:38px;line-height:1.3;font-weight:700;color:var(--metric-accent);font-variant-numeric:tabular-nums;}
+.audit-dashboard .audit-metric-note {font-size:12px;color:var(--text-secondary,#555);}
+@media(max-width:640px) {.audit-dashboard {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(prefers-color-scheme:dark) {.audit-dashboard .audit-metric {background:var(--bg-card,#222);}}
+"""
+
+
+def render_dashboard(headers: list[str], rows: list[list[str]]) -> str | None:
+    """Present explicit counts; never infer severity, readiness or issue status."""
+    if headers not in (["P0", "P1", "P2", "合计"], ["P0", "P1", "P2", "Total"]):
+        return None
+    if len(rows) != 1 or len(rows[0]) != 4 or any(
+        not re.fullmatch(r"[0-9]{1,6}", value) for value in rows[0]
+    ):
+        raise ValueError("Audit dashboard requires one row of four nonnegative integer counts.")
+    counts = [int(value) for value in rows[0]]
+    if sum(counts[:3]) != counts[3]:
+        raise ValueError("Audit dashboard total does not equal P0 + P1 + P2.")
+    chinese = headers[-1] == "合计"
+    notes = (["可能改变核心结论", "投稿前必须核查", "报告与表述改进", "独立问题条目"]
+             if chinese else ["Core conclusion risk", "Check before submission", "Reporting improvements", "Distinct findings"])
+    colors = ["#c24438", "#a46b12", "#3b6b99", "#52606d"]
+    cards = "".join(
+        f'<div class="audit-metric" style="--metric-accent:{color}">'
+        f'<span class="audit-metric-label">{html.escape(label)}</span>'
+        f'<strong class="audit-metric-count">{count}</strong>'
+        f'<span class="audit-metric-note">{note}</span></div>'
+        for label, count, note, color in zip(headers, counts, notes, colors)
+    )
+    return '<div class="audit-dashboard" role="group" aria-label="Audit summary">' + cards + '</div>'
+
+
+def enhance_dashboard_tables(document: str) -> str:
+    """Style an explicitly declared summary table in an existing HTML document."""
+    def replace_table(match):
+        table = match.group(0)
+        headers = [html.unescape(re.sub(r"<[^>]*>", "", cell)).strip()
+                   for cell in re.findall(r"<th\b[^>]*>(.*?)</th>", table, re.DOTALL)]
+        tbody = re.search(r"<tbody\b[^>]*>(.*?)</tbody>", table, re.DOTALL)
+        rows = [] if tbody is None else [
+            [html.unescape(re.sub(r"<[^>]*>", "", cell)).strip()
+             for cell in re.findall(r"<td\b[^>]*>(.*?)</td>", row, re.DOTALL)]
+            for row in re.findall(r"<tr\b[^>]*>(.*?)</tr>", tbody.group(1), re.DOTALL)
+        ]
+        return render_dashboard(headers, rows) or table
+    enhanced = re.sub(r"<table\b[^>]*>.*?</table>", replace_table, document, flags=re.DOTALL)
+    if 'class="audit-dashboard"' in enhanced:
+        enhanced = enhanced.replace('</head>', '<style>' + DASHBOARD_CSS + '</style></head>', 1)
+    return enhanced
+
+
 def render_table(lines, start):
     headers = split_table_row(lines[start]); idx = start + 2; rows = []
     while idx < len(lines) and "|" in lines[idx] and lines[idx].strip():
         rows.append(split_table_row(lines[idx])); idx += 1
+    dashboard = render_dashboard(headers, rows)
+    if dashboard is not None: return dashboard, idx
     head = "".join(f"<th>{render_inline(c)}</th>" for c in headers)
     body = "".join("<tr>" + "".join(f"<td>{render_inline(c)}</td>" for c in r) + "</tr>" for r in rows)
     return f'<div class="table-wrap"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>', idx
@@ -142,6 +199,7 @@ def build_document(body, title):
     # Presentation only: all findings, statuses and limitations come from Markdown.
     body = re.sub(r"<h1[^>]*>.*?</h1>", "", body, count=1, flags=re.DOTALL)
     toc = _build_toc(body)
+    dashboard_styles = DASHBOARD_CSS if 'class="audit-dashboard"' in body else ""
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -149,6 +207,7 @@ def build_document(body, title):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{safe_title}</title>
 <style>
+{dashboard_styles}
 /* === AUDIT REPORT — faithful Markdown presentation === */
 
 *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -516,7 +575,7 @@ def _title_to_slug(title):
     return slug or "audit-report"
 
 
-def write_html(source, output=None, overwrite=False, open_browser=False, open_folder=False):
+def write_html(source, output=None, overwrite=False, open_browser=False, open_folder=False, pretty_doc_html=None):
     source = Path(source)
     if not source.is_file(): raise FileNotFoundError(f"Markdown source not found: {source}")
 
@@ -532,7 +591,8 @@ def write_html(source, output=None, overwrite=False, open_browser=False, open_fo
         requested = source.parent / f"{slug}.html"
 
     requested.parent.mkdir(parents=True, exist_ok=True)
-    doc = build_document(render_markdown(md), title)
+    doc = (enhance_dashboard_tables(Path(pretty_doc_html).read_text(encoding="utf-8"))
+           if pretty_doc_html is not None else build_document(render_markdown(md), title))
     if overwrite:
         dest = choose_output_path(requested, overwrite=True); atomic_replace_text(dest, doc)
     else:
@@ -562,6 +622,8 @@ def main():
     p = argparse.ArgumentParser(description="Render audit report as standalone HTML.")
     p.add_argument("source", type=Path); p.add_argument("--output", type=Path)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--pretty-doc-html", type=Path,
+                   help="Preserve an existing Pretty Doc rendering and style its explicit dashboard table")
     p.add_argument("--open", action="store_true", dest="open_browser",
                    help="Open the HTML report in the default browser")
     p.add_argument("--folder", action="store_true", dest="open_folder",
@@ -569,9 +631,9 @@ def main():
     a = p.parse_args()
     try:
         d = write_html(a.source, output=a.output, overwrite=a.overwrite,
-                       open_browser=a.open_browser, open_folder=a.open_folder)
+                       open_browser=a.open_browser, open_folder=a.open_folder, pretty_doc_html=a.pretty_doc_html)
     except UnicodeDecodeError: p.error(f"Markdown source is not valid UTF-8: {a.source}")
-    except OSError as e: p.error(str(e))
+    except (OSError, ValueError) as e: p.error(str(e))
     resolved = d.resolve()
     # Print path for agents that cannot open files directly
     print(f"Report saved: {resolved}")

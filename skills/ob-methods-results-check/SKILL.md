@@ -155,13 +155,15 @@ python3 "$SKILL_DIR/scripts/recalculate_reported_stats.py" --help
 
 If Python or a bundled helper command fails, preserve the audit, disclose the failure, and continue with manual evidence review where feasible.
 
-6. Build an evidence ledger. For each issue, record location, current claim, evidence, judgment, evidence status, severity, required artifact, and repair action.
+6. Build an evidence ledger. For each issue, record location, current claim, evidence, judgment, evidence status, severity, required artifact, and repair action. Include a front-of-report dashboard and a stable issue-ID index using the explicit counting rules in [references/report-template.md](references/report-template.md). Show P0, P1, P2 and total counts even when a category is zero. Verify them against distinct issue IDs; do not infer counts from headings or keywords, and do not convert counts into readiness scores.
 7. Write each audit to an absolute `audit-reports/<paper-slug>/` path under the directory containing the manuscript, or under another user-approved workspace directory. Do not write reports under the installed Skill directory. If the target already contains a report, create a new versioned sibling such as `audit-reports/<paper-slug>-YYYYMMDD-HHMMSS/`; never overwrite an earlier audit.
 8. Preserve an editable Markdown report as the source of truth. When Python is available, render HTML with the bundled renderer:
 
 ```bash
 python3 "$SKILL_DIR/scripts/render_report.py" "/absolute/path/to/audit-reports/<paper-slug>/report.md"
 ```
+
+If the user requires an existing external Markdown renderer, read [references/rendering-integration.md](references/rendering-integration.md) for optional dashboard styling that preserves its layout. The bundled renderer remains the default and needs no external renderer.
 
 The renderer auto-generates the HTML filename from the report title (e.g., `研究三.html`). Override with `--output <path>`.
 

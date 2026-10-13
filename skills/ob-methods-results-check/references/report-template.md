@@ -9,6 +9,18 @@ Use:
 
 **[Localized status label]:** [Localized review-pending status]
 
+## 0. [Localized dashboard and issue index heading]
+
+| P0 | P1 | P2 | Total |
+|---|---|---|---|
+| 0 | 0 | 0 | 0 |
+
+[Replace example zeros with verified counts; use 合计 instead of Total in Chinese.]
+
+| Issue ID | Severity | Evidence status | Short finding | Location |
+|---|---|---|---|---|
+| P0-01 | P0 | REVIEW_REQUIRED | ... | ... |
+
 ## 1. [Localized overall assessment heading]
 ## 2. [Localized audit scope and limitations heading]
 ## 3. [Localized P0 issues heading]
@@ -53,6 +65,10 @@ Use one stable evidence code for each issue, paired with a localized display lab
 - `LIKELY`
 - `REVIEW_REQUIRED`
 - `WORDING`
+
+The dashboard is required near the beginning, after the title/status and before detailed assessment. Count each distinct stable issue ID once at its assigned severity. Repeated mentions, supporting examples, and multiple affected cells are not additional issues. Split a compound item when it contains independently actionable findings with different evidence statuses; assign one status per ID. Give P2 table rows IDs as well. Include all three severity counts, zeros included, and the total; verify agreement with the issue index and detailed findings before rendering. Each example row in this template is illustrative, not an audit finding. Counts describe workload/severity only, not statistical validity or submission readiness.
+
+The renderer turns only the explicitly declared one-row table with headers `P0 | P1 | P2 | Total` (or `合计`) into four cards. Values must be nonnegative integers and the total must equal the three counts; inconsistent values fail rendering. Other tables remain ordinary tables. Counts also remain visible in plain Markdown.
 
 HTML is a faithful presentation of the Markdown evidence ledger. Do not infer scores, finding counts, evidence status, or resolution from heading patterns or keyword matches. If a summary count is useful, write and verify it explicitly in Markdown. A finding is resolved only after evidence is rechecked, not after ticking a browser checkbox.
 
